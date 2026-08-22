@@ -13,19 +13,76 @@ export default function ItineraryBuilder() {
   const [budget, setBudget] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  const [isAddStopModalOpen, setIsAddStopModalOpen] = useState(false);
+  const [cities, setCities] = useState<any[]>([]);
+  const [selectedCityId, setSelectedCityId] = useState('');
+  const [stopStartDate, setStopStartDate] = useState('');
+  const [stopEndDate, setStopEndDate] = useState('');
+
+  const [activeStopDate, setActiveStopDate] = useState<{stopId: number, dateStr: string} | null>(null);
+  const [activities, setActivities] = useState<any[]>([]);
+  const [selectedActivityId, setSelectedActivityId] = useState('');
+  const [activityTime, setActivityTime] = useState('');
+
   const fetchTripData = async () => {
     try {
-      const [itineraryRes, budgetRes] = await Promise.all([
+      const [itineraryRes, budgetRes, citiesRes] = await Promise.all([
         api.get(`/trips/${id}/itinerary`),
-        api.get(`/trips/${id}/budget`)
+        api.get(`/trips/${id}/budget`),
+        api.get(`/cities?search=`) // fetch available cities
       ]);
       setTrip(itineraryRes.data.trip);
       setItinerary(itineraryRes.data.itinerary);
       setBudget(budgetRes.data);
+      setCities(citiesRes.data.cities);
     } catch (error) {
       console.error('Error fetching itinerary data:', error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleAddStop = async () => {
+    if (!selectedCityId || !stopStartDate || !stopEndDate) return alert('Please fill all fields');
+    try {
+      await api.post(`/trips/${id}/stops`, {
+        cityId: Number(selectedCityId),
+        startDate: new Date(stopStartDate).toISOString(),
+        endDate: new Date(stopEndDate).toISOString()
+      });
+      setIsAddStopModalOpen(false);
+      fetchTripData(); // refresh
+    } catch (error) {
+      console.error('Error adding stop:', error);
+      alert('Failed to add stop. Make sure dates are valid.');
+    }
+  };
+
+  const openAddActivityModal = async (stopId: number, dateStr: string, cityId: number) => {
+    setActiveStopDate({ stopId, dateStr });
+    try {
+      const res = await api.get(`/activities?cityId=${cityId}`);
+      setActivities(res.data.activities);
+      setSelectedActivityId('');
+      setActivityTime('');
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleAddActivity = async () => {
+    if (!activeStopDate || !selectedActivityId) return alert('Please select an activity');
+    try {
+      await api.post(`/stops/${activeStopDate.stopId}/activities`, {
+        activityId: Number(selectedActivityId),
+        scheduledDate: new Date(activeStopDate.dateStr).toISOString(),
+        scheduledTime: activityTime || undefined
+      });
+      setActiveStopDate(null);
+      fetchTripData(); // refresh
+    } catch (error) {
+      console.error('Error adding activity:', error);
+      alert('Failed to add activity.');
     }
   };
 
@@ -49,7 +106,7 @@ export default function ItineraryBuilder() {
 
         <div className="flex justify-between items-center">
           <h3 className="font-semibold text-gray-700">Your Stops</h3>
-          <Button size="sm" variant="outline" className="h-7 text-xs bg-white text-blue-600 border-blue-200 hover:bg-blue-50">
+          <Button size="sm" variant="outline" onClick={() => setIsAddStopModalOpen(true)} className="h-7 text-xs bg-white text-blue-600 border-blue-200 hover:bg-blue-50">
             <Plus className="h-3 w-3 mr-1" /> Add Stop
           </Button>
         </div>
@@ -119,7 +176,12 @@ export default function ItineraryBuilder() {
                           <CalendarIcon className="h-4 w-4" />
                           {date.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}
                         </h4>
-                        <Button size="sm" variant="ghost" className="h-7 text-xs text-blue-600 hover:text-blue-800 hover:bg-blue-100 px-2">
+                        <Button 
+                          size="sm" 
+                          variant="ghost" 
+                          onClick={() => openAddActivityModal(stop.id, dateStr, stop.city.id)}
+                          className="h-7 text-xs text-blue-600 hover:text-blue-800 hover:bg-blue-100 px-2"
+                        >
                           + Add Activity
                         </Button>
                       </div>
@@ -210,6 +272,86 @@ export default function ItineraryBuilder() {
           </CardContent>
         </Card>
       </div>
+
+      {isAddStopModalOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 w-[400px] shadow-xl">
+            <h3 className="text-lg font-bold mb-4">Add a new Stop</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Select City</label>
+                <select 
+                  className="w-full border rounded-md p-2"
+                  value={selectedCityId}
+                  onChange={(e) => setSelectedCityId(e.target.value)}
+                >
+                  <option value="">-- Choose a city --</option>
+                  {cities.map(c => (
+                    <option key={c.id} value={c.id}>{c.name}, {c.country}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Start Date</label>
+                <input 
+                  type="date" 
+                  className="w-full border rounded-md p-2"
+                  value={stopStartDate}
+                  onChange={(e) => setStopStartDate(e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">End Date</label>
+                <input 
+                  type="date" 
+                  className="w-full border rounded-md p-2"
+                  value={stopEndDate}
+                  onChange={(e) => setStopEndDate(e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 mt-6">
+              <Button variant="outline" onClick={() => setIsAddStopModalOpen(false)}>Cancel</Button>
+              <Button onClick={handleAddStop}>Add Stop</Button>
+            </div>
+          </div>
+        </div>
+      )}
+      {activeStopDate && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 w-[400px] shadow-xl">
+            <h3 className="text-lg font-bold mb-4">Add Activity</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Select Activity</label>
+                <select 
+                  className="w-full border rounded-md p-2"
+                  value={selectedActivityId}
+                  onChange={(e) => setSelectedActivityId(e.target.value)}
+                >
+                  <option value="">-- Choose an activity --</option>
+                  {activities.map(a => (
+                    <option key={a.id} value={a.id}>{a.name} (₹{a.cost})</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Time (Optional)</label>
+                <input 
+                  type="time" 
+                  className="w-full border rounded-md p-2"
+                  value={activityTime}
+                  onChange={(e) => setActivityTime(e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 mt-6">
+              <Button variant="outline" onClick={() => setActiveStopDate(null)}>Cancel</Button>
+              <Button onClick={handleAddActivity}>Add Activity</Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
