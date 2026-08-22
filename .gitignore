@@ -8,3 +8,5 @@ build/
 .claude/
 .windsurf/
 skills-lock.json 
+server/generated/
+client/dist/
