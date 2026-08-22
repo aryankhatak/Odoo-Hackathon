@@ -10,6 +10,7 @@ const createTripSchema = z.object({
   startDate: z.string(),
   endDate: z.string(),
   description: z.string().optional(),
+  budget: z.number().optional(),
   coverPhotoUrl: z.string().optional(),
 });
 
@@ -40,7 +41,7 @@ router.post("/", authMiddleware, async (req: AuthRequest, res) => {
   if (!parsed.success) {
     return res.status(400).json({ error: parsed.error.flatten() });
   }
-  const { name, startDate, endDate, description, coverPhotoUrl } = parsed.data;
+  const { name, startDate, endDate, description, budget, coverPhotoUrl } = parsed.data;
 
   const trip = await prisma.trip.create({
     data: {
@@ -49,6 +50,7 @@ router.post("/", authMiddleware, async (req: AuthRequest, res) => {
       startDate: new Date(startDate),
       endDate: new Date(endDate),
       description: description ?? null,
+      budget: budget || 0,
       coverPhotoUrl: coverPhotoUrl ?? null,
     },
   });

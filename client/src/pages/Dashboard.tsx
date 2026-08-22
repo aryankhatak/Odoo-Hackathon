@@ -49,11 +49,13 @@ export default function Dashboard() {
   }, [trips]);
 
   // Compute budget
-  const { totalCost, categoryBreakdown } = useMemo(() => {
+  const { totalCost, categoryBreakdown, totalBudget } = useMemo(() => {
     let cost = 0;
+    let budget = 0;
     const breakdown: Record<string, number> = {};
     
-    trips.forEach(trip => {
+    trips.forEach((trip: any) => {
+      budget += (trip.budget || 0);
       trip.stops?.forEach((stop: any) => {
         stop.stopActivities?.forEach((sa: any) => {
           const itemCost = Number(sa.costOverride || sa.activity?.cost || 0);
@@ -65,11 +67,14 @@ export default function Dashboard() {
       });
     });
 
-    return { totalCost: cost, categoryBreakdown: breakdown };
+    return { 
+      totalCost: cost, 
+      categoryBreakdown: breakdown,
+      totalBudget: budget
+    };
   }, [trips]);
 
-  // We don't have a hardcoded 'budget' per user, so let's set a logical total budget
-  const assumedBudget = totalCost === 0 ? 50000 : Math.ceil((totalCost * 1.2) / 10000) * 10000;
+  const assumedBudget = totalBudget > 0 ? totalBudget : (totalCost === 0 ? 50000 : Math.ceil((totalCost * 1.2) / 10000) * 10000);
   const remaining = Math.max(0, assumedBudget - totalCost);
   const percentageUsed = assumedBudget === 0 ? 0 : Math.min(100, Math.round((totalCost / assumedBudget) * 100));
 

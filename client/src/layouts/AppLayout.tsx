@@ -108,7 +108,7 @@ export function AppLayout() {
           </div>
           <div className="flex items-center gap-4">
             {user?.photoUrl ? (
-              <img src={user.photoUrl} alt={user.name} className="h-8 w-8 rounded-full bg-gray-200" />
+              <img src={user.photoUrl} alt={user.name} className="h-8 w-8 rounded-full bg-gray-200 object-cover" />
             ) : (
               <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-sm">
                 {user?.name?.charAt(0).toUpperCase()}

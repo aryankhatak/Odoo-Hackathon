@@ -12,6 +12,7 @@ export default function CreateTrip() {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [description, setDescription] = useState('');
+  const [budget, setBudget] = useState('0');
   const [coverPhotoUrl, setCoverPhotoUrl] = useState('');
   
   const [isLoading, setIsLoading] = useState(false);
@@ -28,6 +29,7 @@ export default function CreateTrip() {
         startDate: new Date(startDate).toISOString(),
         endDate: new Date(endDate).toISOString(),
         description,
+        budget: parseFloat(budget) || 0,
         coverPhotoUrl: coverPhotoUrl || undefined
       });
       
@@ -105,6 +107,19 @@ export default function CreateTrip() {
                 placeholder="Exploring the best of Europe - culture, food and unforgettable views."
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium leading-6 text-gray-900 mb-1">
+                Total Budget (₹)
+              </label>
+              <Input
+                type="number"
+                min="0"
+                placeholder="50000"
+                value={budget}
+                onChange={(e) => setBudget(e.target.value)}
               />
             </div>
 

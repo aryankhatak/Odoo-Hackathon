@@ -120,7 +120,7 @@ export default function MyTrips() {
             </div>
             <div>
               <p className="text-xs text-gray-500 font-semibold uppercase tracking-wider">Total Budget</p>
-              <h3 className="text-2xl font-bold text-gray-900">₹0</h3>
+              <h3 className="text-2xl font-bold text-gray-900">₹{trips.reduce((acc, t) => acc + (t.budget || 0), 0).toLocaleString()}</h3>
             </div>
           </CardContent>
         </Card>

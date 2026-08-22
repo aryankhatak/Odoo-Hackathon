@@ -20,8 +20,40 @@ export default function Budget() {
   useEffect(() => {
     const fetchBudget = async () => {
       try {
-        const response = await api.get(`/trips/${id}/budget`);
-        setBudget(response.data);
+        const response = await api.get(`/trips/${id}`);
+        const trip = response.data.trip;
+        
+        // Compute budget object
+        let grandTotal = 0;
+        const categoryTotals: Record<string, number> = {};
+        const dailyCostsMap: Record<string, number> = {};
+
+        trip.stops?.forEach((stop: any) => {
+          stop.stopActivities?.forEach((sa: any) => {
+            const cost = Number(sa.costOverride || sa.activity?.cost || 0);
+            grandTotal += cost;
+            
+            const cat = sa.activity?.category || 'Other';
+            categoryTotals[cat] = (categoryTotals[cat] || 0) + cost;
+
+            // Approximate daily cost based on stop arrival/departure
+            const dateKey = new Date(stop.arrivalDate || trip.startDate).toISOString().split('T')[0];
+            dailyCostsMap[dateKey] = (dailyCostsMap[dateKey] || 0) + cost;
+          });
+        });
+
+        const dailyCosts = Object.keys(dailyCostsMap).sort().map(date => ({
+          date,
+          cost: dailyCostsMap[date]
+        }));
+
+        setTotalBudget(trip.budget || 200000);
+
+        setBudget({
+          grandTotal,
+          categoryTotals,
+          dailyCosts
+        });
       } catch (error) {
         console.error('Error fetching budget:', error);
       } finally {
