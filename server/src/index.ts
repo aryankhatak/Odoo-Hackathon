@@ -2,6 +2,7 @@ import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import { prisma } from "./lib/prisma.js";
+
 import authRoutes from "./routes/auth.js";
 import meRoutes from "./routes/me.js";
 import tripRoutes from "./routes/trips.js";
@@ -12,6 +13,7 @@ import stopActivityRoutes from "./routes/stopActivities.js";
 import itineraryRoutes from "./routes/itinerary.js";
 import sharingRoutes from "./routes/sharing.js";
 import userRoutes from "./routes/users.js";
+import savedRoutes from "./routes/saved.js";
 
 const app = express();
 const PORT = process.env.PORT || 5000;
