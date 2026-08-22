@@ -33,6 +33,7 @@ app.use("/api", meRoutes);
 app.use("/api", cityRoutes);
 app.use("/api", activityRoutes);
 app.use("/api", sharingRoutes);
+app.use("/api/saved", savedRoutes);
 app.use("/api/trips", tripRoutes);
 app.use("/api", stopRoutes);
 app.use("/api", stopActivityRoutes);

@@ -4,7 +4,8 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -15,7 +16,8 @@ model User {
   photoUrl     String?  @map("photo_url")
   createdAt    DateTime @default(now()) @map("created_at")
 
-  trips Trip[]
+  trips      Trip[]
+  savedItems SavedItem[]
 
   @@map("users")
 }
@@ -26,7 +28,7 @@ model Trip {
   name           String
   startDate      DateTime  @map("start_date")
   endDate        DateTime  @map("end_date")
-  description    String?   @db.Text
+  description    String?
   coverPhotoUrl  String?   @map("cover_photo_url")
   isPublic       Boolean   @default(false) @map("is_public")
   shareSlug      String?   @unique @map("share_slug")
@@ -48,6 +50,7 @@ model City {
 
   stops      Stop[]
   activities Activity[]
+  savedItems SavedItem[]
 
   @@map("cities")
 }
@@ -72,9 +75,9 @@ model Activity {
   cityId          Int      @map("city_id")
   name            String
   category        String
-  cost            Decimal  @db.Decimal(10, 2)
+  cost            Decimal
   durationMinutes Int      @map("duration_minutes")
-  description     String?  @db.Text
+  description     String?
   imageUrl        String?  @map("image_url")
 
   city           City           @relation(fields: [cityId], references: [id])
@@ -89,10 +92,24 @@ model StopActivity {
   activityId     Int      @map("activity_id")
   scheduledDate  DateTime @map("scheduled_date")
   scheduledTime  String?  @map("scheduled_time")
-  costOverride   Decimal? @db.Decimal(10, 2) @map("cost_override")
+  costOverride   Decimal? @map("cost_override")
 
   stop     Stop     @relation(fields: [stopId], references: [id], onDelete: Cascade)
   activity Activity @relation(fields: [activityId], references: [id])
 
   @@map("stop_activities")
-} 
+}
+
+model SavedItem {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @map("user_id")
+  cityId    Int      @map("city_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  city City @relation(fields: [cityId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, cityId])
+  @@map("saved_items")
+}
+

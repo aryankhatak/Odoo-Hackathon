@@ -1,17 +1,7 @@
 import "dotenv/config";
-import { PrismaMariaDb } from "@prisma/adapter-mariadb";
 import { PrismaClient } from "../generated/prisma/client.js";
 
-const adapter = new PrismaMariaDb({
-  host: "localhost",
-  port: 3306,
-  user: "root",
-  password: "aryan123",
-  database: "globetrotter",
-  connectionLimit: 5,
-});
-
-const prisma = new PrismaClient({ adapter }); 
+const prisma = new PrismaClient();
 
 const cities = [
   { name: "Paris", country: "France", costIndex: 80, popularity: 95 },
@@ -64,4 +54,4 @@ main()
   })
   .finally(async () => {
     await prisma.$disconnect();
-  }); 
+  });

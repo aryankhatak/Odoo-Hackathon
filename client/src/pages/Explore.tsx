@@ -6,38 +6,59 @@ import { api } from '../services/api';
 
 export default function Explore() {
   const [cities, setCities] = useState<any[]>([]);
+  const [savedCityIds, setSavedCityIds] = useState<Set<number>>(new Set());
   const [search, setSearch] = useState('');
   const [isLoading, setIsLoading] = useState(true);
 
+  const fetchCities = async () => {
+    try {
+      setIsLoading(true);
+      const [citiesRes, savedRes] = await Promise.all([
+        api.get(`/cities?search=${search}`),
+        api.get('/saved').catch(() => ({ data: { savedItems: [] } }))
+      ]);
+      setCities(citiesRes.data.cities || []);
+      
+      const savedIds = new Set(savedRes.data.savedItems.map((item: any) => item.cityId));
+      setSavedCityIds(savedIds as Set<number>);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchCities = async () => {
-      try {
-        setIsLoading(true);
-        const res = await api.get(`/cities?search=${search}`);
-        setCities(res.data.cities || []);
-      } catch (error) {
-        console.error('Error fetching cities:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
-    // Simple debounce
     const timeout = setTimeout(fetchCities, 300);
     return () => clearTimeout(timeout);
   }, [search]);
 
-  // Use the first returned city as the "Featured Destination" if available,
-  // or a fallback if the DB doesn't have many cities yet.
-  const featuredCity = cities.length > 0 ? cities[0] : {
-    name: 'Bali',
-    country: 'Indonesia',
-    imageUrl: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?q=80&w=1200&auto=format&fit=crop',
-    costIndex: 3,
-    popularity: 98
+  const toggleSave = async (cityId: number) => {
+    const isSaved = savedCityIds.has(cityId);
+    
+    // Optimistic UI update
+    setSavedCityIds(prev => {
+      const next = new Set(prev);
+      if (isSaved) next.delete(cityId);
+      else next.add(cityId);
+      return next;
+    });
+
+    try {
+      if (isSaved) {
+        await api.delete(`/saved/${cityId}`);
+      } else {
+        await api.post('/saved', { cityId });
+      }
+    } catch (error) {
+      console.error('Error toggling save:', error);
+      // Revert on error
+      fetchCities();
+    }
   };
 
-  // Convert cost index (1-5) to string
+  const featuredCity = cities.length > 0 ? cities[0] : null;
+
   const getCostString = (index: number) => {
     if (index <= 2) return 'Budget';
     if (index === 3) return 'Moderate';
@@ -109,81 +130,84 @@ export default function Explore() {
       </div>
 
       {/* Featured Destination */}
-      <div>
-        <h2 className="text-xl font-bold text-gray-900 mb-4 tracking-tight">Featured Destination</h2>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Main Featured Card */}
-          <div className="lg:col-span-2 relative rounded-2xl overflow-hidden shadow-sm group">
-            <img 
-              src={featuredCity.imageUrl || 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?q=80&w=1200&auto=format&fit=crop'} 
-              alt={`${featuredCity.name}, ${featuredCity.country}`} 
-              className="w-full h-80 object-cover transition-transform duration-700 group-hover:scale-105"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-            
-            <div className="absolute top-4 left-4 bg-white/95 backdrop-blur px-3 py-1.5 rounded-md text-xs font-bold text-yellow-600 flex items-center gap-1 shadow-sm">
-              <Star className="h-3 w-3 fill-yellow-500 text-yellow-500" /> Featured
-            </div>
-            
-            <button className="absolute top-4 right-4 h-8 w-8 bg-white/20 backdrop-blur rounded-full flex items-center justify-center text-white hover:bg-white hover:text-red-500 transition-colors">
-              <Heart className="h-4 w-4" />
-            </button>
+      {featuredCity && (
+        <div>
+          <h2 className="text-xl font-bold text-gray-900 mb-4 tracking-tight">Featured Destination</h2>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2 relative rounded-2xl overflow-hidden shadow-sm group">
+              <img 
+                src={featuredCity.imageUrl || 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?q=80&w=1200&auto=format&fit=crop'} 
+                alt={`${featuredCity.name}, ${featuredCity.country}`} 
+                className="w-full h-80 object-cover transition-transform duration-700 group-hover:scale-105"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+              
+              <div className="absolute top-4 left-4 bg-white/95 backdrop-blur px-3 py-1.5 rounded-md text-xs font-bold text-yellow-600 flex items-center gap-1 shadow-sm">
+                <Star className="h-3 w-3 fill-yellow-500 text-yellow-500" /> Featured
+              </div>
+              
+              <button 
+                onClick={() => toggleSave(featuredCity.id)}
+                className={`absolute top-4 right-4 h-8 w-8 backdrop-blur rounded-full flex items-center justify-center transition-colors ${savedCityIds.has(featuredCity.id) ? 'bg-white text-red-500' : 'bg-white/20 text-white hover:bg-white hover:text-red-500'}`}
+              >
+                <Heart className={`h-4 w-4 ${savedCityIds.has(featuredCity.id) ? 'fill-red-500' : ''}`} />
+              </button>
 
-            <div className="absolute bottom-6 left-6 right-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
-              <div>
-                <h3 className="text-3xl font-extrabold text-white mb-2">{featuredCity.name}, {featuredCity.country}</h3>
-                <p className="text-gray-200 font-medium text-sm max-w-md mb-4 leading-relaxed">
-                  Discover amazing places, plan unforgettable itineraries and create lifetime memories in {featuredCity.name}.
-                </p>
-                <div className="flex items-center gap-4 text-xs font-semibold text-white">
-                  <span className="flex items-center gap-1 bg-black/40 backdrop-blur px-2.5 py-1.5 rounded-md">
-                    💰 Cost: {getCostString(featuredCity.costIndex)}
-                  </span>
-                  <span className="flex items-center gap-1 bg-black/40 backdrop-blur px-2.5 py-1.5 rounded-md">
-                    <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" /> 4.8 ({featuredCity.popularity * 23} reviews)
-                  </span>
+              <div className="absolute bottom-6 left-6 right-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
+                <div>
+                  <h3 className="text-3xl font-extrabold text-white mb-2">{featuredCity.name}, {featuredCity.country}</h3>
+                  <p className="text-gray-200 font-medium text-sm max-w-md mb-4 leading-relaxed">
+                    Discover amazing places, plan unforgettable itineraries and create lifetime memories in {featuredCity.name}.
+                  </p>
+                  <div className="flex items-center gap-4 text-xs font-semibold text-white">
+                    <span className="flex items-center gap-1 bg-black/40 backdrop-blur px-2.5 py-1.5 rounded-md">
+                      💰 Cost: {getCostString(featuredCity.costIndex)}
+                    </span>
+                    <span className="flex items-center gap-1 bg-black/40 backdrop-blur px-2.5 py-1.5 rounded-md">
+                      <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" /> 4.8 ({featuredCity.popularity * 23} reviews)
+                    </span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 shrink-0">
+                  <Button variant="outline" className="bg-white/10 backdrop-blur border-white/30 text-white hover:bg-white/20 font-semibold border">
+                    View Details
+                  </Button>
+                  <Button className="bg-blue-600 hover:bg-blue-700 shadow-md gap-1.5 font-semibold">
+                    <Plus className="h-4 w-4" /> Add to Trip
+                  </Button>
                 </div>
               </div>
-              <div className="flex items-center gap-3 shrink-0">
-                <Button variant="outline" className="bg-white/10 backdrop-blur border-white/30 text-white hover:bg-white/20 font-semibold border">
-                  View Details
-                </Button>
-                <Button className="bg-blue-600 hover:bg-blue-700 shadow-md gap-1.5 font-semibold">
-                  <Plus className="h-4 w-4" /> Add to Trip
-                </Button>
-              </div>
             </div>
-          </div>
 
-          {/* Why Travelers Love list */}
-          <Card className="border-gray-100 shadow-sm">
-            <CardContent className="p-6">
-              <h3 className="font-bold text-gray-900 mb-6 tracking-tight">Why travelers love {featuredCity.name}</h3>
-              <div className="space-y-5">
-                {[
-                  { icon: '🏖️', title: 'Top Attractions', desc: 'Must-visit spots' },
-                  { icon: '🏛️', title: 'Rich Culture', desc: 'Temples, traditions and history' },
-                  { icon: '🥥', title: 'Amazing Food', desc: 'Delicious local cuisine' },
-                  { icon: '🤿', title: 'Exciting Activities', desc: 'Unforgettable experiences' },
-                ].map((item, idx) => (
-                  <div key={idx} className="flex items-center justify-between group cursor-pointer">
-                    <div className="flex items-center gap-4">
-                      <div className="h-10 w-10 bg-blue-50 rounded-xl flex items-center justify-center text-xl shrink-0 group-hover:bg-blue-100 transition-colors">
-                        {item.icon}
+            <Card className="border-gray-100 shadow-sm">
+              <CardContent className="p-6">
+                <h3 className="font-bold text-gray-900 mb-6 tracking-tight">Why travelers love {featuredCity.name}</h3>
+                <div className="space-y-5">
+                  {[
+                    { icon: '🏖️', title: 'Top Attractions', desc: 'Must-visit spots' },
+                    { icon: '🏛️', title: 'Rich Culture', desc: 'Temples, traditions and history' },
+                    { icon: '🥥', title: 'Amazing Food', desc: 'Delicious local cuisine' },
+                    { icon: '🤿', title: 'Exciting Activities', desc: 'Unforgettable experiences' },
+                  ].map((item, idx) => (
+                    <div key={idx} className="flex items-center justify-between group cursor-pointer">
+                      <div className="flex items-center gap-4">
+                        <div className="h-10 w-10 bg-blue-50 rounded-xl flex items-center justify-center text-xl shrink-0 group-hover:bg-blue-100 transition-colors">
+                          {item.icon}
+                        </div>
+                        <div>
+                          <h4 className="font-bold text-gray-900 text-sm mb-0.5">{item.title}</h4>
+                          <p className="text-xs text-gray-500 font-medium">{item.desc}</p>
+                        </div>
                       </div>
-                      <div>
-                        <h4 className="font-bold text-gray-900 text-sm mb-0.5">{item.title}</h4>
-                        <p className="text-xs text-gray-500 font-medium">{item.desc}</p>
-                      </div>
+                      <ChevronRight className="h-4 w-4 text-gray-400 group-hover:text-blue-600 transition-colors" />
                     </div>
-                    <ChevronRight className="h-4 w-4 text-gray-400 group-hover:text-blue-600 transition-colors" />
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Popular Destinations / Search Results */}
       <div>
@@ -211,8 +235,11 @@ export default function Explore() {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
                 
-                <button className="absolute top-3 right-3 h-7 w-7 bg-white/20 backdrop-blur rounded-full flex items-center justify-center text-white hover:bg-white hover:text-red-500 transition-colors shadow-sm">
-                  <Heart className="h-3.5 w-3.5" />
+                <button 
+                  onClick={() => toggleSave(dest.id)}
+                  className={`absolute top-3 right-3 h-7 w-7 backdrop-blur rounded-full flex items-center justify-center transition-colors shadow-sm ${savedCityIds.has(dest.id) ? 'bg-white text-red-500' : 'bg-white/20 text-white hover:bg-white hover:text-red-500'}`}
+                >
+                  <Heart className={`h-3.5 w-3.5 ${savedCityIds.has(dest.id) ? 'fill-red-500' : ''}`} />
                 </button>
 
                 <div className="relative p-4 pb-4">
