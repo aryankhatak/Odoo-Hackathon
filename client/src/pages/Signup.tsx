@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Plane, User, Mail, Lock, Eye, EyeOff, ArrowRight, Shield, Globe, Heart, Camera } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -29,6 +29,36 @@ export default function Signup() {
   const strengthLabels = ['Weak', 'Fair', 'Good', 'Strong'];
   const strengthColors = ['bg-red-500', 'bg-orange-500', 'bg-green-500', 'bg-green-600'];
   const textColor = ['text-red-500', 'text-orange-500', 'text-green-500', 'text-green-600'];
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const processFile = (file: File) => {
+    if (file.size > 2 * 1024 * 1024) {
+      setError('Please choose an image under 2MB');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setPhotoUrl(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files?.[0]) processFile(e.target.files[0]);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    const file = e.dataTransfer.files?.[0];
+    if (file && file.type.startsWith('image/')) {
+      processFile(file);
+    }
+  };
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -95,23 +125,31 @@ export default function Signup() {
 
                   {/* Photo Profile Picture Avatar Placeholder matching wireframe */}
                   <div className="flex flex-col items-center justify-center mb-6">
-                    <div className="relative h-24 w-24 rounded-full border-2 border-dashed border-gray-300 bg-gray-50 flex flex-col items-center justify-center overflow-hidden mb-2 group hover:bg-gray-100 transition-colors">
+                    <div 
+                      className="relative h-24 w-24 rounded-full border-2 border-dashed border-gray-300 bg-gray-50 flex flex-col items-center justify-center overflow-hidden mb-2 cursor-pointer hover:bg-gray-100 transition-colors"
+                      onClick={() => fileInputRef.current?.click()}
+                      onDragOver={handleDragOver}
+                      onDrop={handleDrop}
+                    >
                       {photoUrl ? (
                         <img src={photoUrl} alt="Profile" className="h-full w-full object-cover" />
                       ) : (
                         <>
-                          <Camera className="h-6 w-6 text-gray-400 mb-1" />
-                          <span className="text-[10px] font-bold text-gray-400">Photo</span>
+                          <Camera className="h-6 w-6 text-gray-400 mb-1 pointer-events-none" />
+                          <span className="text-[10px] font-bold text-gray-400 pointer-events-none">Drop Photo</span>
                         </>
                       )}
                     </div>
                     <input
-                      type="url"
-                      placeholder="Image URL (optional)"
-                      value={photoUrl}
-                      onChange={(e) => setPhotoUrl(e.target.value)}
-                      className="text-xs text-center border-b border-gray-200 bg-transparent focus:outline-none focus:border-blue-500 w-32 placeholder:text-gray-400"
+                      type="file"
+                      ref={fileInputRef}
+                      onChange={handlePhotoUpload}
+                      accept="image/*"
+                      className="hidden"
                     />
+                    <div className="text-xs text-gray-400 font-medium">
+                      Drag & Drop or Click to upload
+                    </div>
                   </div>
                   
                   <div className="space-y-1.5">
