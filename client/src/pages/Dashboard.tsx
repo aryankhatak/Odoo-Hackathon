@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Plus, MapPin, Calendar as CalendarIcon, ArrowRight, Plane } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -18,10 +18,18 @@ export default function Dashboard() {
       try {
         const [tripsRes, citiesRes] = await Promise.all([
           api.get('/trips'),
-          api.get('/cities?search=') // fetch some popular cities
+          api.get('/cities?search=')
         ]);
-        setTrips(tripsRes.data.trips.slice(0, 3)); // top 3 trips
-        setCities(citiesRes.data.cities.slice(0, 4)); // top 4 cities
+        
+        // Filter out past trips, or just sort them by closest upcoming date
+        const now = new Date().getTime();
+        const upcomingTrips = tripsRes.data.trips
+          .filter((t: any) => new Date(t.endDate).getTime() >= now)
+          .sort((a: any, b: any) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
+          
+        // Store all trips for budget calc, but upcoming for display
+        setTrips(tripsRes.data.trips || []);
+        setCities(citiesRes.data.cities.slice(0, 4) || []);
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
       } finally {
@@ -32,22 +40,67 @@ export default function Dashboard() {
     fetchDashboardData();
   }, []);
 
+  // Compute actual closest upcoming trip
+  const upcomingTrip = useMemo(() => {
+    const now = new Date().getTime();
+    return trips
+      .filter((t: any) => new Date(t.endDate).getTime() >= now)
+      .sort((a: any, b: any) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())[0];
+  }, [trips]);
+
+  // Compute budget
+  const { totalCost, categoryBreakdown } = useMemo(() => {
+    let cost = 0;
+    const breakdown: Record<string, number> = {};
+    
+    trips.forEach(trip => {
+      trip.stops?.forEach((stop: any) => {
+        stop.stopActivities?.forEach((sa: any) => {
+          const itemCost = Number(sa.costOverride || sa.activity?.cost || 0);
+          cost += itemCost;
+          
+          const category = sa.activity?.category || 'Other';
+          breakdown[category] = (breakdown[category] || 0) + itemCost;
+        });
+      });
+    });
+
+    return { totalCost: cost, categoryBreakdown: breakdown };
+  }, [trips]);
+
+  // We don't have a hardcoded 'budget' per user, so let's set a logical total budget
+  const assumedBudget = totalCost === 0 ? 50000 : Math.ceil((totalCost * 1.2) / 10000) * 10000;
+  const remaining = Math.max(0, assumedBudget - totalCost);
+  const percentageUsed = assumedBudget === 0 ? 0 : Math.min(100, Math.round((totalCost / assumedBudget) * 100));
+
+  // Sort categories by cost
+  const topCategories = Object.entries(categoryBreakdown)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 2);
+
+  // Category Icons mapping
+  const categoryIcons: Record<string, string> = {
+    'Food': '🍜',
+    'Sightseeing': '🏛️',
+    'Transport': '✈️',
+    'Accommodation': '🏨',
+    'Other': '🎟️'
+  };
+
   return (
     <div className="space-y-8">
-      {/* Header Section */}
       {/* Hero Section */}
       <div className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-2xl p-8 text-white shadow-lg relative overflow-hidden">
-        {/* Subtle background decoration */}
         <Plane className="absolute -right-8 -top-8 h-48 w-48 text-white/10 rotate-45" />
         <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div>
             <h1 className="text-3xl font-extrabold mb-2">
-              Welcome back, {user?.name?.split(' ')[0]}! 👋
+              Welcome back, {user?.name?.split(' ')[0] || 'Traveler'}! 👋
             </h1>
             <p className="text-blue-100 mb-6">Ready to explore the world? Your next adventure is waiting.</p>
             <div className="flex items-center gap-4 text-sm font-medium">
               <span className="bg-white/20 px-3 py-1.5 rounded-full flex items-center gap-2">
-                🌍 {trips.length} Active Trips
+                🌍 {trips.length} Total Trips
               </span>
               <span className="bg-white/20 px-3 py-1.5 rounded-full flex items-center gap-2">
                 🏙️ {trips.reduce((acc, t) => acc + (t.stops?.length || 0), 0)} Cities
@@ -61,7 +114,7 @@ export default function Dashboard() {
       </div>
 
       {isLoading ? (
-        <div className="py-12 text-center text-gray-500">Loading dashboard...</div>
+        <div className="py-12 text-center text-gray-500 font-medium animate-pulse">Loading dashboard...</div>
       ) : (
         <>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -77,22 +130,22 @@ export default function Dashboard() {
                   </Link>
                 </div>
                 
-                {trips.length === 0 ? (
+                {!upcomingTrip ? (
                   <Card className="bg-gray-50 border-dashed">
                     <CardContent className="flex flex-col items-center justify-center py-12">
                       <Plane className="h-12 w-12 text-gray-300 mb-4" />
                       <p className="text-gray-500 font-medium">You don't have any upcoming trips.</p>
-                      <Button variant="link" onClick={() => navigate('/trips/new')} className="mt-2">
+                      <Button variant="link" onClick={() => navigate('/trips/new')} className="mt-2 text-blue-600">
                         Create your first trip
                       </Button>
                     </CardContent>
                   </Card>
                 ) : (
                   <Card className="overflow-hidden hover:shadow-xl transition-all duration-300 group border-0 shadow-md">
-                    <div className="h-64 relative overflow-hidden">
+                    <div className="h-64 relative overflow-hidden cursor-pointer" onClick={() => navigate(`/trips/${upcomingTrip.id}/itinerary`)}>
                       <img 
-                        src={trips[0].coverPhotoUrl || 'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=1200&q=80'} 
-                        alt={trips[0].name}
+                        src={upcomingTrip.coverPhotoUrl || 'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=1200&q=80'} 
+                        alt={upcomingTrip.name}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
@@ -102,14 +155,14 @@ export default function Dashboard() {
                       </div>
 
                       <div className="absolute bottom-6 left-6 right-6 text-white">
-                        <h3 className="text-3xl font-bold mb-2">{trips[0].name}</h3>
+                        <h3 className="text-3xl font-bold mb-2">{upcomingTrip.name}</h3>
                         <div className="flex flex-wrap items-center gap-4 text-sm font-medium text-gray-200">
                           <span className="flex items-center gap-1 bg-black/30 px-2 py-1 rounded-md backdrop-blur-sm">
                             <CalendarIcon className="h-4 w-4 text-blue-400" />
-                            {new Date(trips[0].startDate).toLocaleDateString(undefined, {month: 'short', day: 'numeric'})} - {new Date(trips[0].endDate).toLocaleDateString(undefined, {month: 'short', day: 'numeric', year: 'numeric'})}
+                            {new Date(upcomingTrip.startDate).toLocaleDateString(undefined, {month: 'short', day: 'numeric'})} - {new Date(upcomingTrip.endDate).toLocaleDateString(undefined, {month: 'short', day: 'numeric', year: 'numeric'})}
                           </span>
                           <span className="flex items-center gap-1 bg-black/30 px-2 py-1 rounded-md backdrop-blur-sm">
-                            ⏳ {Math.ceil((new Date(trips[0].endDate).getTime() - new Date(trips[0].startDate).getTime()) / (1000 * 60 * 60 * 24))} Days
+                            ⏳ {Math.max(1, Math.ceil((new Date(upcomingTrip.endDate).getTime() - new Date(upcomingTrip.startDate).getTime()) / (1000 * 60 * 60 * 24)))} Days
                           </span>
                         </div>
                       </div>
@@ -118,10 +171,10 @@ export default function Dashboard() {
                       <div className="flex-1">
                         <div className="flex items-center gap-2 text-gray-600 font-medium">
                           <MapPin className="h-5 w-5 text-red-500" /> 
-                          {trips[0].stops?.length > 0 ? trips[0].stops.map((s:any) => s.city.name).join(' ✈️ ') : 'No cities added yet'}
+                          {upcomingTrip.stops?.length > 0 ? upcomingTrip.stops.map((s:any) => s.city.name).join(' ✈️ ') : 'No cities added yet'}
                         </div>
                       </div>
-                      <Button onClick={() => navigate(`/trips/${trips[0].id}/itinerary`)} className="bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-200 gap-2 shrink-0 rounded-full px-6">
+                      <Button onClick={() => navigate(`/trips/${upcomingTrip.id}/itinerary`)} className="bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-200 gap-2 shrink-0 rounded-full px-6">
                         View Itinerary <ArrowRight className="h-4 w-4" />
                       </Button>
                     </CardContent>
@@ -139,7 +192,6 @@ export default function Dashboard() {
                 </div>
                 
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {/* Using distinct Unsplash IDs for each generic city to solve the duplicate image issue */}
                   {cities.map((city, idx) => {
                     const fallbackImages = [
                       "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?q=80&w=600&auto=format&fit=crop", // Paris
@@ -148,7 +200,7 @@ export default function Dashboard() {
                       "https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?q=80&w=600&auto=format&fit=crop"  // NY
                     ];
                     return (
-                      <div key={city.id} className="group relative rounded-xl overflow-hidden cursor-pointer aspect-[4/5] shadow-sm hover:shadow-xl transition-all duration-300">
+                      <div key={city.id} onClick={() => navigate('/explore')} className="group relative rounded-xl overflow-hidden cursor-pointer aspect-[4/5] shadow-sm hover:shadow-xl transition-all duration-300">
                         <img 
                           src={city.imageUrl || fallbackImages[idx % fallbackImages.length]} 
                           alt={city.name}
@@ -177,8 +229,8 @@ export default function Dashboard() {
                       <CalendarIcon className="h-6 w-6" />
                     </div>
                     <div>
-                      <p className="text-sm font-bold text-gray-500 uppercase tracking-wider">Upcoming</p>
-                      <h3 className="text-2xl font-extrabold text-gray-900">{trips.length} Trips</h3>
+                      <p className="text-sm font-bold text-gray-500 uppercase tracking-wider">Total Trips</p>
+                      <h3 className="text-2xl font-extrabold text-gray-900">{trips.length}</h3>
                     </div>
                   </div>
                   
@@ -189,8 +241,8 @@ export default function Dashboard() {
                       <MapPin className="h-6 w-6" />
                     </div>
                     <div>
-                      <p className="text-sm font-bold text-gray-500 uppercase tracking-wider">Cities</p>
-                      <h3 className="text-2xl font-extrabold text-gray-900">{trips.reduce((acc, t) => acc + (t.stops?.length || 0), 0)} Planned</h3>
+                      <p className="text-sm font-bold text-gray-500 uppercase tracking-wider">Cities Planned</p>
+                      <h3 className="text-2xl font-extrabold text-gray-900">{trips.reduce((acc, t) => acc + (t.stops?.length || 0), 0)}</h3>
                     </div>
                   </div>
                 </CardContent>
@@ -202,37 +254,39 @@ export default function Dashboard() {
                 <CardContent className="p-6 relative z-10">
                   <div className="flex items-center justify-between mb-6">
                     <h3 className="font-bold text-lg flex items-center gap-2">
-                      💰 Budget Overview
+                      💰 Estimated Spending
                     </h3>
                   </div>
 
                   <div className="space-y-4">
                     <div className="flex justify-between items-end">
                       <div>
-                        <p className="text-xs text-gray-400 font-medium uppercase tracking-wider mb-1">Total Budget</p>
-                        <p className="text-3xl font-extrabold text-white">₹2,00,000</p>
+                        <p className="text-xs text-gray-400 font-medium uppercase tracking-wider mb-1">Total Cost</p>
+                        <p className="text-3xl font-extrabold text-white">₹{totalCost.toLocaleString()}</p>
                       </div>
                       <div className="text-right">
-                        <p className="text-xs text-gray-400 font-medium uppercase tracking-wider mb-1">Remaining</p>
-                        <p className="text-xl font-bold text-emerald-400">₹25,000</p>
+                        <p className="text-xs text-gray-400 font-medium uppercase tracking-wider mb-1">Assumed Budget</p>
+                        <p className="text-xl font-bold text-emerald-400">₹{assumedBudget.toLocaleString()}</p>
                       </div>
                     </div>
 
                     <div className="w-full bg-gray-800 rounded-full h-3 mb-2 overflow-hidden border border-gray-700">
-                      <div className="bg-gradient-to-r from-blue-500 to-indigo-500 h-3 rounded-full" style={{ width: '87.5%' }}></div>
+                      <div className="bg-gradient-to-r from-blue-500 to-indigo-500 h-3 rounded-full" style={{ width: `${percentageUsed}%` }}></div>
                     </div>
-                    <p className="text-xs text-gray-400 text-right font-medium">87.5% of Budget Used</p>
+                    <p className="text-xs text-gray-400 text-right font-medium">{percentageUsed}% of Budget Used</p>
                     
                     <div className="pt-4 mt-4 border-t border-gray-800">
                       <p className="text-xs text-gray-400 mb-3 font-medium uppercase tracking-wider">Top Expenses</p>
-                      <div className="flex justify-between text-sm">
-                        <span className="flex items-center gap-2">✈️ Flights</span>
-                        <span className="font-medium text-gray-300">45%</span>
-                      </div>
-                      <div className="flex justify-between text-sm mt-2">
-                        <span className="flex items-center gap-2">🏨 Hotels</span>
-                        <span className="font-medium text-gray-300">30%</span>
-                      </div>
+                      {topCategories.length > 0 ? (
+                        topCategories.map(([cat, cost]) => (
+                          <div key={cat} className="flex justify-between text-sm mt-2 first:mt-0">
+                            <span className="flex items-center gap-2">{categoryIcons[cat] || '🎟️'} {cat}</span>
+                            <span className="font-medium text-gray-300">{Math.round((cost / totalCost) * 100)}%</span>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="text-sm text-gray-400 italic">No expenses recorded yet.</div>
+                      )}
                     </div>
                   </div>
                 </CardContent>

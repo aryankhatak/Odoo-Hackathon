@@ -20,7 +20,16 @@ router.get("/", authMiddleware, async (req: AuthRequest, res) => {
   const trips = await prisma.trip.findMany({
     where: { userId: req.userId! },
     orderBy: { startDate: "asc" },
-    include: { stops: true },
+    include: { 
+      stops: {
+        include: {
+          city: true,
+          stopActivities: {
+            include: { activity: true }
+          }
+        }
+      } 
+    },
   });
   res.json({ trips });
 });
