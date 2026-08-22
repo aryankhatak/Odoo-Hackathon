@@ -13,7 +13,7 @@ export function AppLayout() {
   };
 
   const navItems = [
-    { to: '/', icon: Home, label: 'Dashboard' },
+    { to: '/dashboard', icon: Home, label: 'Dashboard' },
     { to: '/trips', icon: Plane, label: 'My Trips' },
     { to: '/explore', icon: Map, label: 'Explore' },
     { to: '/saved', icon: Heart, label: 'Saved' },

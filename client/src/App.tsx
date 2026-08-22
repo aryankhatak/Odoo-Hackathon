@@ -18,6 +18,7 @@ import Saved from './pages/Saved';
 import Calendar from './pages/Calendar';
 import Profile from './pages/Profile';
 import Settings from './pages/Settings';
+import Landing from './pages/Landing';
 
 function App() {
   return (
@@ -25,6 +26,7 @@ function App() {
       <Router>
         <Routes>
           {/* Public Routes */}
+          <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/public/trips/:slug" element={<PublicTripView />} />
@@ -32,7 +34,7 @@ function App() {
           {/* Protected Routes inside AppLayout */}
           <Route element={<AuthRoute />}>
             <Route element={<AppLayout />}>
-              <Route path="/" element={<Dashboard />} />
+              <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/trips" element={<MyTrips />} />
               <Route path="/trips/new" element={<CreateTrip />} />
               <Route path="/trips/:id/itinerary" element={<ItineraryBuilder />} />
