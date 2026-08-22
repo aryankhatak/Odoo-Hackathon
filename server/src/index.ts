@@ -5,6 +5,7 @@ import { prisma } from "./lib/prisma.js";
 import authRoutes from "./routes/auth.js";
 import meRoutes from "./routes/me.js";
 import tripRoutes from "./routes/trips.js";
+import stopRoutes from "./routes/stops.js";
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -24,6 +25,7 @@ app.get("/api/health", async (_req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api", meRoutes);
 app.use("/api/trips", tripRoutes);
+app.use("/api", stopRoutes);
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
