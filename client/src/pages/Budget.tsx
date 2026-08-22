@@ -14,8 +14,8 @@ export default function Budget() {
   const [budget, setBudget] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // We hardcode a total budget for the UI mockup, in a real app this would be saved in the trip model
-  const TOTAL_BUDGET = 200000;
+  const [totalBudget, setTotalBudget] = useState(200000);
+  const [isEditingBudget, setIsEditingBudget] = useState(false);
 
   useEffect(() => {
     const fetchBudget = async () => {
@@ -35,7 +35,7 @@ export default function Budget() {
   if (!budget) return <div className="p-8 text-center text-red-500">Failed to load budget</div>;
 
   const estimatedCost = budget.grandTotal;
-  const remaining = TOTAL_BUDGET - estimatedCost;
+  const remaining = totalBudget - estimatedCost;
   const daysCount = budget.dailyCosts?.length || 1;
   const dailyAverage = Math.round(estimatedCost / daysCount);
 
@@ -67,7 +67,25 @@ export default function Budget() {
         <Card>
           <CardContent className="p-6">
             <p className="text-sm font-medium text-gray-500 mb-1">Total Budget</p>
-            <h3 className="text-2xl font-bold text-blue-600">₹{TOTAL_BUDGET.toLocaleString()}</h3>
+            {isEditingBudget ? (
+              <input 
+                type="number" 
+                autoFocus
+                className="w-full text-2xl font-bold text-blue-600 border-b-2 border-blue-600 bg-transparent outline-none p-0"
+                value={totalBudget}
+                onChange={(e) => setTotalBudget(Number(e.target.value))}
+                onBlur={() => setIsEditingBudget(false)}
+                onKeyDown={(e) => e.key === 'Enter' && setIsEditingBudget(false)}
+              />
+            ) : (
+              <h3 
+                className="text-2xl font-bold text-blue-600 cursor-pointer hover:opacity-80"
+                onClick={() => setIsEditingBudget(true)}
+                title="Click to edit"
+              >
+                ₹{totalBudget.toLocaleString()}
+              </h3>
+            )}
           </CardContent>
         </Card>
         <Card>
