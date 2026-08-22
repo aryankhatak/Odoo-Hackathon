@@ -1,7 +1,104 @@
-import { Calendar as CalendarIcon, Briefcase, Plane, Ticket, ChevronLeft, ChevronRight, Plus, MapPin, Clock, ArrowRight } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { Calendar as CalendarIcon, Briefcase, Plane, Ticket, ChevronLeft, ChevronRight, Plus, MapPin, Clock, ArrowRight, Activity } from 'lucide-react';
 import { Button } from '../components/ui/Button';
+import { api } from '../services/api';
+import { useNavigate } from 'react-router-dom';
 
 export default function Calendar() {
+  const navigate = useNavigate();
+  const [trips, setTrips] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchTrips = async () => {
+      try {
+        const res = await api.get('/trips');
+        setTrips(res.data.trips || []);
+      } catch (error) {
+        console.error('Error fetching calendar data', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchTrips();
+  }, []);
+
+  const { stats, events } = useMemo(() => {
+    let upcomingTripsCount = 0;
+    let upcomingFlightsCount = 0;
+    let totalActivities = 0;
+    let daysTraveled = 0;
+    const now = new Date().getTime();
+    
+    const allEvents: any[] = [];
+
+    trips.forEach(trip => {
+      const start = new Date(trip.startDate);
+      const end = new Date(trip.endDate);
+      const days = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)));
+      daysTraveled += days;
+      
+      const isUpcoming = end.getTime() >= now;
+      if (isUpcoming) upcomingTripsCount++;
+
+      const countdownDays = Math.ceil((start.getTime() - now) / (1000 * 60 * 60 * 24));
+      
+      if (isUpcoming) {
+        allEvents.push({
+          id: `trip-${trip.id}`,
+          type: 'trip',
+          date: start,
+          name: trip.name,
+          location: trip.stops?.[0]?.city?.name || 'Multiple destinations',
+          countdown: countdownDays,
+          image: trip.coverPhotoUrl || 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?q=80&w=200&auto=format&fit=crop',
+          dateString: `${start.toLocaleDateString(undefined, {month: 'short', day: 'numeric'})} – ${end.toLocaleDateString(undefined, {month: 'short', day: 'numeric', year: 'numeric'})}`
+        });
+      }
+
+      trip.stops?.forEach((stop: any) => {
+        stop.stopActivities?.forEach((sa: any) => {
+          totalActivities++;
+          const isTransport = sa.activity?.category === 'Transport';
+          
+          let actDate = start; // Fallback to trip start
+          if (sa.startTime) actDate = new Date(`1970-01-01T${sa.startTime}Z`); // Try to parse time, just hacky
+          // For a real event, we usually need date + time. We'll just use the trip start date for activities in calendar for now
+          // unless they have a specific date stored.
+          
+          if (isUpcoming && isTransport) upcomingFlightsCount++;
+
+          if (isUpcoming) {
+            allEvents.push({
+              id: `act-${sa.id}`,
+              type: isTransport ? 'flight' : 'activity',
+              date: start, 
+              name: sa.activity?.name || 'Activity',
+              location: stop.city?.name || trip.name,
+              countdown: countdownDays,
+              dateString: `${start.toLocaleDateString(undefined, {month: 'short', day: 'numeric'})} • ${sa.startTime || 'TBD'}`,
+              icon: isTransport ? Plane : Ticket,
+              color: isTransport ? 'text-blue-500' : 'text-orange-500',
+              bg: isTransport ? 'bg-blue-50' : 'bg-orange-50'
+            });
+          }
+        });
+      });
+    });
+
+    allEvents.sort((a, b) => a.countdown - b.countdown);
+
+    return {
+      stats: [
+        { count: upcomingTripsCount, title: 'Upcoming Trips', subtitle: upcomingTripsCount > 0 ? 'Ready for adventure' : 'None planned', icon: Briefcase, color: 'text-blue-500', bg: 'bg-blue-50' },
+        { count: upcomingFlightsCount, title: 'Upcoming Flights', subtitle: 'Transport booked', icon: Plane, color: 'text-green-500', bg: 'bg-green-50' },
+        { count: totalActivities, title: 'Activities', subtitle: 'Across your trips', icon: Ticket, color: 'text-orange-500', bg: 'bg-orange-50' },
+        { count: daysTraveled, title: 'Days Traveled', subtitle: 'This year', icon: CalendarIcon, color: 'text-purple-500', bg: 'bg-purple-50' },
+      ],
+      events: allEvents
+    };
+  }, [trips]);
+
   return (
     <div className="max-w-7xl mx-auto space-y-8 pb-12">
       
@@ -11,19 +108,14 @@ export default function Calendar() {
           <h1 className="text-3xl font-extrabold text-gray-900 mb-1 tracking-tight">Trip Calendar</h1>
           <p className="text-gray-500 font-medium">All your trips, flights and activities in one place.</p>
         </div>
-        <Button className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-5 rounded-xl shadow-md shadow-blue-200 gap-2">
+        <Button onClick={() => navigate('/trips/new')} className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-5 rounded-xl shadow-md shadow-blue-200 gap-2">
           <Plus className="h-4 w-4" /> Add Trip / Event
         </Button>
       </div>
 
       {/* Stats Row */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {[
-          { count: '2', title: 'Upcoming Trips', subtitle: 'Next one in 12 days', icon: Briefcase, color: 'text-blue-500', bg: 'bg-blue-50' },
-          { count: '3', title: 'Upcoming Flights', subtitle: 'Next flight in 12 days', icon: Plane, color: 'text-green-500', bg: 'bg-green-50' },
-          { count: '5', title: 'Activities', subtitle: 'Across your trips', icon: Ticket, color: 'text-orange-500', bg: 'bg-orange-50' },
-          { count: '18', title: 'Days Traveled', subtitle: 'This year', icon: CalendarIcon, color: 'text-purple-500', bg: 'bg-purple-50' },
-        ].map((stat, idx) => (
+        {stats.map((stat, idx) => (
           <div key={idx} className="bg-white border border-gray-100 rounded-2xl p-5 flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow">
             <div className={`h-14 w-14 rounded-xl flex items-center justify-center shrink-0 ${stat.bg}`}>
               <stat.icon className={`h-6 w-6 ${stat.color}`} />
@@ -41,82 +133,47 @@ export default function Calendar() {
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Left Column: Upcoming List */}
-        <div className="lg:col-span-5 bg-white border border-gray-100 rounded-2xl shadow-[0_2px_20px_rgb(0,0,0,0.03)] flex flex-col">
-          <div className="p-6 pb-2">
+        <div className="lg:col-span-5 bg-white border border-gray-100 rounded-2xl shadow-[0_2px_20px_rgb(0,0,0,0.03)] flex flex-col h-[600px]">
+          <div className="p-6 pb-2 shrink-0">
             <h3 className="text-lg font-extrabold text-gray-900 tracking-tight">Upcoming</h3>
           </div>
           
-          <div className="flex-1 overflow-y-auto px-6 py-2 space-y-4">
-            
-            {/* Trip 1 */}
-            <div className="border border-gray-100 rounded-2xl p-3 flex gap-4 hover:border-blue-100 hover:shadow-sm transition-all group">
-              <img src="https://images.unsplash.com/photo-1537996194471-e657df975ab4?q=80&w=200&auto=format&fit=crop" alt="Bali" className="h-16 w-20 rounded-xl object-cover" />
-              <div className="flex-1 py-1">
-                <div className="flex items-start justify-between">
-                  <h4 className="font-bold text-gray-900 text-sm">Bali Getaway</h4>
-                  <span className="text-blue-600 font-bold text-xs">In 12 days &gt;</span>
+          <div className="flex-1 overflow-y-auto px-6 py-2 space-y-4 scrollbar-hide">
+            {isLoading ? (
+              <div className="py-8 text-center text-gray-500 text-sm animate-pulse">Loading events...</div>
+            ) : events.length === 0 ? (
+              <div className="py-8 text-center text-gray-500 text-sm">No upcoming events found.</div>
+            ) : (
+              events.map((event) => (
+                <div key={event.id} className="border border-gray-100 rounded-2xl p-3 flex gap-4 hover:border-blue-100 hover:shadow-sm transition-all group">
+                  {event.type === 'trip' ? (
+                    <img src={event.image} alt={event.name} className="h-16 w-20 rounded-xl object-cover" />
+                  ) : (
+                    <div className={`h-16 w-20 rounded-xl flex items-center justify-center ${event.bg} ${event.color}`}>
+                      <event.icon className="h-7 w-7" />
+                    </div>
+                  )}
+                  
+                  <div className="flex-1 py-1">
+                    <div className="flex items-start justify-between">
+                      <h4 className="font-bold text-gray-900 text-sm">{event.name}</h4>
+                      <span className="text-blue-600 font-bold text-xs shrink-0 pl-2">
+                        {event.countdown === 0 ? 'Today' : event.countdown < 0 ? 'Ongoing' : `In ${event.countdown} days`} &gt;
+                      </span>
+                    </div>
+                    <div className="mt-1 space-y-0.5">
+                      <p className="text-xs font-medium text-gray-500 flex items-center gap-1"><MapPin className="h-3 w-3 shrink-0" /> <span className="truncate">{event.location}</span></p>
+                      <p className="text-xs font-medium text-gray-500 flex items-center gap-1"><CalendarIcon className="h-3 w-3 shrink-0" /> <span className="truncate">{event.dateString}</span></p>
+                    </div>
+                  </div>
                 </div>
-                <div className="mt-1 space-y-0.5">
-                  <p className="text-xs font-medium text-gray-500 flex items-center gap-1"><MapPin className="h-3 w-3" /> Bali, Indonesia</p>
-                  <p className="text-xs font-medium text-gray-500 flex items-center gap-1"><CalendarIcon className="h-3 w-3" /> May 24 – May 30, 2025</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Trip 2 */}
-            <div className="border border-gray-100 rounded-2xl p-3 flex gap-4 hover:border-blue-100 hover:shadow-sm transition-all group">
-              <img src="https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?q=80&w=200&auto=format&fit=crop" alt="Tokyo" className="h-16 w-20 rounded-xl object-cover" />
-              <div className="flex-1 py-1">
-                <div className="flex items-start justify-between">
-                  <h4 className="font-bold text-gray-900 text-sm">Tokyo Adventure</h4>
-                  <span className="text-blue-600 font-bold text-xs">In 31 days &gt;</span>
-                </div>
-                <div className="mt-1 space-y-0.5">
-                  <p className="text-xs font-medium text-gray-500 flex items-center gap-1"><MapPin className="h-3 w-3" /> Tokyo, Japan</p>
-                  <p className="text-xs font-medium text-gray-500 flex items-center gap-1"><CalendarIcon className="h-3 w-3" /> Jun 12 – Jun 20, 2025</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Flight */}
-            <div className="border border-gray-100 rounded-2xl p-3 flex gap-4 hover:border-blue-100 hover:shadow-sm transition-all group">
-              <div className="h-16 w-20 rounded-xl bg-blue-50 flex items-center justify-center text-blue-500">
-                <Plane className="h-7 w-7" />
-              </div>
-              <div className="flex-1 py-1">
-                <div className="flex items-start justify-between">
-                  <h4 className="font-bold text-gray-900 text-sm">Flight to Bali</h4>
-                  <span className="text-blue-600 font-bold text-xs">In 12 days &gt;</span>
-                </div>
-                <div className="mt-1 space-y-0.5">
-                  <p className="text-xs font-medium text-gray-500 flex items-center gap-1"><MapPin className="h-3 w-3" /> DEL ➔ DPS</p>
-                  <p className="text-xs font-medium text-gray-500 flex items-center gap-1"><CalendarIcon className="h-3 w-3" /> May 24, 2025 • 8:40 AM</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Activity */}
-            <div className="border border-gray-100 rounded-2xl p-3 flex gap-4 hover:border-blue-100 hover:shadow-sm transition-all group">
-              <div className="h-16 w-20 rounded-xl bg-orange-50 flex items-center justify-center text-orange-500">
-                <Ticket className="h-7 w-7" />
-              </div>
-              <div className="flex-1 py-1">
-                <div className="flex items-start justify-between">
-                  <h4 className="font-bold text-gray-900 text-sm">Ubud Tour & Temples</h4>
-                  <span className="text-blue-600 font-bold text-xs">In 13 days &gt;</span>
-                </div>
-                <div className="mt-1 space-y-0.5">
-                  <p className="text-xs font-medium text-gray-500 flex items-center gap-1"><MapPin className="h-3 w-3" /> Bali, Indonesia</p>
-                  <p className="text-xs font-medium text-gray-500 flex items-center gap-1"><CalendarIcon className="h-3 w-3" /> May 25, 2025 • 10:00 AM</p>
-                </div>
-              </div>
-            </div>
-
+              ))
+            )}
           </div>
           
-          <div className="p-4 border-t border-gray-50 mt-2">
-            <button className="w-full text-center text-sm font-bold text-blue-600 hover:text-blue-700 flex items-center justify-center gap-1">
-              View all events <ChevronRight className="h-4 w-4" />
+          <div className="p-4 border-t border-gray-50 mt-2 shrink-0">
+            <button onClick={() => navigate('/trips')} className="w-full text-center text-sm font-bold text-blue-600 hover:text-blue-700 flex items-center justify-center gap-1">
+              View all trips <ChevronRight className="h-4 w-4" />
             </button>
           </div>
         </div>
