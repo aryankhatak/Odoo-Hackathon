@@ -70,7 +70,7 @@ export default function Signup() {
 
             <div className="mb-8">
               <h1 className="text-3xl font-bold text-gray-900 mb-2 flex items-center gap-2">
-                Create your account <span className="text-yellow-400">✨</span>
+                Create your account
               </h1>
               <p className="text-gray-500 font-medium">Start your journey to unforgettable adventures.</p>
             </div>
