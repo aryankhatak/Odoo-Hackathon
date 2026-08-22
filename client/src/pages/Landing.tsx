@@ -8,22 +8,28 @@ export default function Landing() {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  // If already logged in, redirect to dashboard
+  // If already logged in, redirect to dashboard (Commented out temporarily so you can preview the page)
+  /*
   useEffect(() => {
     if (user) {
       navigate('/dashboard');
     }
   }, [user, navigate]);
+  */
 
   return (
     <div className="relative min-h-screen w-full overflow-hidden bg-black flex flex-col">
       {/* Background Video/Image from the Pinterest inspiration */}
       <div className="absolute inset-0 z-0">
-        <img 
-          src="https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?q=80&w=2070&auto=format&fit=crop" 
-          alt="Travel Background" 
+        <video 
+          autoPlay 
+          loop 
+          muted 
+          playsInline
           className="w-full h-full object-cover opacity-60"
-        />
+        >
+          <source src="https://cdn.coverr.co/videos/coverr-flying-over-a-beautiful-beach-5243/1080p.mp4" type="video/mp4" />
+        </video>
         <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/20 to-black/80" />
       </div>
 
