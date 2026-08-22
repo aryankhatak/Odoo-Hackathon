@@ -5,8 +5,6 @@ import { prisma } from "../lib/prisma.js";
 
 const router: Router = Router();
 
-router.use(authMiddleware);
-
 const createStopSchema = z.object({
   cityId: z.number(),
   startDate: z.string(),
@@ -26,34 +24,38 @@ async function getOwnedTrip(tripId: number, userId: number) {
 }
 
 // POST /api/trips/:tripId/stops - add a stop to a trip
-router.post("/trips/:tripId/stops", async (req: AuthRequest, res) => {
-  const tripId = Number(req.params.tripId);
-  const trip = await getOwnedTrip(tripId, req.userId!);
-  if (!trip) return res.status(404).json({ error: "Trip not found" });
+router.post(
+  "/trips/:tripId/stops",
+  authMiddleware,
+  async (req: AuthRequest, res) => {
+    const tripId = Number(req.params.tripId);
+    const trip = await getOwnedTrip(tripId, req.userId!);
+    if (!trip) return res.status(404).json({ error: "Trip not found" });
 
-  const parsed = createStopSchema.safeParse(req.body);
-  if (!parsed.success) {
-    return res.status(400).json({ error: parsed.error.flatten() });
-  }
-  const { cityId, startDate, endDate, orderIndex } = parsed.data;
+    const parsed = createStopSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: parsed.error.flatten() });
+    }
+    const { cityId, startDate, endDate, orderIndex } = parsed.data;
 
-  const stopCount = await prisma.stop.count({ where: { tripId } });
+    const stopCount = await prisma.stop.count({ where: { tripId } });
 
-  const stop = await prisma.stop.create({
-    data: {
-      tripId,
-      cityId,
-      startDate: new Date(startDate),
-      endDate: new Date(endDate),
-      orderIndex: orderIndex ?? stopCount,
-    },
-    include: { city: true },
-  });
-  res.status(201).json({ stop });
-});
+    const stop = await prisma.stop.create({
+      data: {
+        tripId,
+        cityId,
+        startDate: new Date(startDate),
+        endDate: new Date(endDate),
+        orderIndex: orderIndex ?? stopCount,
+      },
+      include: { city: true },
+    });
+    res.status(201).json({ stop });
+  },
+);
 
 // PATCH /api/stops/:id - update a stop (dates or order)
-router.patch("/stops/:id", async (req: AuthRequest, res) => {
+router.patch("/stops/:id", authMiddleware, async (req: AuthRequest, res) => {
   const id = Number(req.params.id);
 
   const stop = await prisma.stop.findUnique({
@@ -82,7 +84,7 @@ router.patch("/stops/:id", async (req: AuthRequest, res) => {
 });
 
 // DELETE /api/stops/:id - remove a stop
-router.delete("/stops/:id", async (req: AuthRequest, res) => {
+router.delete("/stops/:id", authMiddleware, async (req: AuthRequest, res) => {
   const id = Number(req.params.id);
 
   const stop = await prisma.stop.findUnique({

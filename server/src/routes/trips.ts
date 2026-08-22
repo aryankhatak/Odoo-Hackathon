@@ -5,8 +5,6 @@ import { prisma } from "../lib/prisma.js";
 
 const router: Router = Router();
 
-router.use(authMiddleware);
-
 const createTripSchema = z.object({
   name: z.string().min(1),
   startDate: z.string(),
@@ -18,7 +16,7 @@ const createTripSchema = z.object({
 const updateTripSchema = createTripSchema.partial();
 
 // GET /api/trips - list current user's trips
-router.get("/", async (req: AuthRequest, res) => {
+router.get("/", authMiddleware, async (req: AuthRequest, res) => {
   const trips = await prisma.trip.findMany({
     where: { userId: req.userId! },
     orderBy: { startDate: "asc" },
@@ -28,7 +26,7 @@ router.get("/", async (req: AuthRequest, res) => {
 });
 
 // POST /api/trips - create a trip
-router.post("/", async (req: AuthRequest, res) => {
+router.post("/", authMiddleware, async (req: AuthRequest, res) => {
   const parsed = createTripSchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ error: parsed.error.flatten() });
@@ -41,15 +39,15 @@ router.post("/", async (req: AuthRequest, res) => {
       name,
       startDate: new Date(startDate),
       endDate: new Date(endDate),
-      description,
-      coverPhotoUrl,
+      description: description ?? null,
+      coverPhotoUrl: coverPhotoUrl ?? null,
     },
   });
   res.status(201).json({ trip });
 });
 
 // GET /api/trips/:id - get single trip (must belong to user)
-router.get("/:id", async (req: AuthRequest, res) => {
+router.get("/:id", authMiddleware, async (req: AuthRequest, res) => {
   const id = Number(req.params.id);
   const trip = await prisma.trip.findFirst({
     where: { id, userId: req.userId! },
@@ -68,7 +66,7 @@ router.get("/:id", async (req: AuthRequest, res) => {
 });
 
 // PATCH /api/trips/:id - update trip
-router.patch("/:id", async (req: AuthRequest, res) => {
+router.patch("/:id", authMiddleware, async (req: AuthRequest, res) => {
   const id = Number(req.params.id);
   const parsed = updateTripSchema.safeParse(req.body);
   if (!parsed.success) {
@@ -89,7 +87,7 @@ router.patch("/:id", async (req: AuthRequest, res) => {
 });
 
 // DELETE /api/trips/:id - delete trip
-router.delete("/:id", async (req: AuthRequest, res) => {
+router.delete("/:id", authMiddleware, async (req: AuthRequest, res) => {
   const id = Number(req.params.id);
   const existing = await prisma.trip.findFirst({
     where: { id, userId: req.userId! },
