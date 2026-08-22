@@ -118,13 +118,17 @@ export default function Signup() {
         </div>
       </div>
       
-      {/* Right side - Image Cover */}
+      {/* Right side - Image/Video Cover */}
       <div className="relative hidden w-0 flex-1 lg:block">
-        <img
+        <video 
+          autoPlay 
+          loop 
+          muted 
+          playsInline
           className="absolute inset-0 h-full w-full object-cover"
-          src="https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2021&q=80"
-          alt="Scenic travel background"
-        />
+        >
+          <source src="https://cdn.coverr.co/videos/coverr-flying-over-a-beautiful-beach-5243/1080p.mp4" type="video/mp4" />
+        </video>
         <div className="absolute inset-0 bg-blue-900/20 mix-blend-multiply" />
       </div>
     </div>
