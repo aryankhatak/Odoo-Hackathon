@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Plane, Mail, Lock, Eye, EyeOff, ArrowRight, Map, MapPin, Users, Shield, Globe, Heart } from 'lucide-react';
+import { Plane, Mail, Lock, Eye, EyeOff, ArrowRight, Map, MapPin, Users, Shield, Globe, Heart, Camera } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
 import { Button } from '../components/ui/Button';
@@ -23,7 +23,7 @@ export default function Login() {
     try {
       const response = await api.post('/auth/login', { email, password });
       login(response.data.token, response.data.user);
-      navigate('/');
+      navigate('/dashboard');
     } catch (err: any) {
       setError(err.response?.data?.error || 'Failed to login. Please check your credentials.');
     } finally {
@@ -77,6 +77,14 @@ export default function Login() {
                       {error}
                     </div>
                   )}
+
+                  {/* Photo Profile Picture Avatar Placeholder matching wireframe */}
+                  <div className="flex flex-col items-center justify-center mb-6">
+                    <div className="h-24 w-24 rounded-full border border-gray-200 bg-gray-50 flex flex-col items-center justify-center mb-2">
+                      <Camera className="h-6 w-6 text-gray-400 mb-1" />
+                      <span className="text-[10px] font-bold text-gray-400">Photo</span>
+                    </div>
+                  </div>
                   
                   <div className="space-y-1.5">
                     <label className="block text-sm font-bold text-gray-900">

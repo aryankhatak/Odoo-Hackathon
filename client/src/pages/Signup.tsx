@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Plane, User, Mail, Lock, Eye, EyeOff, ArrowRight, Map, MapPin, Users, Shield, Globe, Heart } from 'lucide-react';
+import { Plane, User, Mail, Lock, Eye, EyeOff, ArrowRight, Shield, Globe, Heart, Camera } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
 import { Button } from '../components/ui/Button';
@@ -10,6 +10,7 @@ export default function Signup() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [photoUrl, setPhotoUrl] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -18,16 +19,16 @@ export default function Signup() {
 
   // Basic password strength calculation
   const getStrength = (pass: string) => {
-    if (pass.length === 0) return 0;
-    if (pass.length < 6) return 1;
-    if (pass.length >= 6 && /[A-Z]/.test(pass) && /[0-9]/.test(pass)) return 3;
-    if (pass.length >= 6) return 2;
-    return 0;
+    let score = 0;
+    if (pass.length > 5) score += 1;
+    if (pass.length > 8) score += 1;
+    if (/[A-Z]/.test(pass) && /[0-9]/.test(pass)) score += 1;
+    return score;
   };
   const strength = getStrength(password);
-  const strengthLabels = ['None', 'Weak', 'Fair', 'Strong'];
-  const strengthColors = ['bg-gray-200', 'bg-red-500', 'bg-yellow-500', 'bg-green-500'];
-  const textColor = ['text-gray-400', 'text-red-500', 'text-yellow-500', 'text-green-500'];
+  const strengthLabels = ['Weak', 'Fair', 'Good', 'Strong'];
+  const strengthColors = ['bg-red-500', 'bg-orange-500', 'bg-green-500', 'bg-green-600'];
+  const textColor = ['text-red-500', 'text-orange-500', 'text-green-500', 'text-green-600'];
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,9 +36,9 @@ export default function Signup() {
     setIsLoading(true);
 
     try {
-      const response = await api.post('/auth/signup', { name, email, password });
+      const response = await api.post('/auth/signup', { name, email, password, photoUrl });
       login(response.data.token, response.data.user);
-      navigate('/');
+      navigate('/dashboard');
     } catch (err: any) {
       setError(err.response?.data?.error || 'Failed to sign up. Please try again.');
     } finally {
@@ -91,6 +92,27 @@ export default function Signup() {
                       {error}
                     </div>
                   )}
+
+                  {/* Photo Profile Picture Avatar Placeholder matching wireframe */}
+                  <div className="flex flex-col items-center justify-center mb-6">
+                    <div className="relative h-24 w-24 rounded-full border-2 border-dashed border-gray-300 bg-gray-50 flex flex-col items-center justify-center overflow-hidden mb-2 group hover:bg-gray-100 transition-colors">
+                      {photoUrl ? (
+                        <img src={photoUrl} alt="Profile" className="h-full w-full object-cover" />
+                      ) : (
+                        <>
+                          <Camera className="h-6 w-6 text-gray-400 mb-1" />
+                          <span className="text-[10px] font-bold text-gray-400">Photo</span>
+                        </>
+                      )}
+                    </div>
+                    <input
+                      type="url"
+                      placeholder="Image URL (optional)"
+                      value={photoUrl}
+                      onChange={(e) => setPhotoUrl(e.target.value)}
+                      className="text-xs text-center border-b border-gray-200 bg-transparent focus:outline-none focus:border-blue-500 w-32 placeholder:text-gray-400"
+                    />
+                  </div>
                   
                   <div className="space-y-1.5">
                     <label className="block text-sm font-bold text-gray-900">

@@ -12,6 +12,7 @@ const signupSchema = z.object({
   name: z.string().min(1),
   email: z.string().email(),
   password: z.string().min(6),
+  photoUrl: z.string().url().optional().or(z.literal('')),
 });
 
 const loginSchema = z.object({
@@ -24,7 +25,7 @@ router.post("/signup", async (req, res) => {
   if (!parsed.success) {
     return res.status(400).json({ error: parsed.error.flatten() });
   }
-  const { name, email, password } = parsed.data;
+  const { name, email, password, photoUrl } = parsed.data;
 
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) {
@@ -33,13 +34,13 @@ router.post("/signup", async (req, res) => {
 
   const passwordHash = await bcrypt.hash(password, 10);
   const user = await prisma.user.create({
-    data: { name, email, passwordHash },
+    data: { name, email, passwordHash, photoUrl: photoUrl || null },
   });
 
   const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: "7d" });
   res.status(201).json({
     token,
-    user: { id: user.id, name: user.name, email: user.email },
+    user: { id: user.id, name: user.name, email: user.email, photoUrl: user.photoUrl },
   });
 });
 
@@ -63,7 +64,7 @@ router.post("/login", async (req, res) => {
   const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: "7d" });
   res.json({
     token,
-    user: { id: user.id, name: user.name, email: user.email },
+    user: { id: user.id, name: user.name, email: user.email, photoUrl: user.photoUrl },
   });
 });
 
