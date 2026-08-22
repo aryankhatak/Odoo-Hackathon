@@ -56,7 +56,7 @@ export default function Login() {
 
             <div className="mb-8">
               <h1 className="text-3xl font-bold text-gray-900 mb-2 flex items-center gap-2">
-                Welcome back <span className="text-yellow-400">👋</span>
+                Welcome back
               </h1>
               <p className="text-gray-500 font-medium">Log in to continue your adventure.</p>
             </div>
