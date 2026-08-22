@@ -2,6 +2,17 @@
 
 GlobeTrotter is a full-stack travel planning application built for the Odoo Hackathon. It empowers users to explore new destinations, save their favorite spots, build detailed itineraries, and track their travel budgets seamlessly.
 
+## 🗺️ User Flow
+
+1. **Sign Up / Login**: Create a personalized account by providing your name, email, and uploading a profile picture via drag-and-drop.
+2. **Dashboard Overview**: Land on the interactive Dashboard to get a high-level summary of your travel stats, upcoming trips, and budget utilization.
+3. **Explore Destinations**: Navigate to the Explore page to browse a curated list of popular cities, view beautiful imagery, and discover exciting local activities.
+4. **Save Favorites**: Click the heart icon on any city or activity to add them to your personalized "Saved" list for future trip planning.
+5. **Create a Trip**: Go to "My Trips" and easily create a new journey by specifying a destination name, travel dates, description, and your total allocated budget.
+6. **Plan Your Itinerary**: Dive into the Itinerary Builder to add stops (cities) to your trip and schedule specific activities day-by-day, automatically tracking the estimated costs.
+7. **Track on Calendar**: Switch to the Calendar view to see a chronological timeline of your upcoming travel plans, flights, and scheduled activities.
+8. **Monitor Your Budget**: Visit the Budget insights page to visualize your spending breakdown via interactive charts, ensuring your estimated costs stay well within your planned budget.
+
 ## ✨ Features
 
 - **User Authentication**: Secure Sign-Up and Login with profile photo uploads.
