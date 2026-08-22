@@ -70,7 +70,14 @@ export default function Signup() {
       login(response.data.token, response.data.user);
       navigate('/dashboard');
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to sign up. Please try again.');
+      console.error("Signup error:", err);
+      let errorMsg = 'Failed to sign up. Please try again.';
+      if (err.response?.data?.error) {
+         errorMsg = typeof err.response.data.error === 'string' ? err.response.data.error : JSON.stringify(err.response.data.error);
+      } else if (err.message) {
+         errorMsg = err.message;
+      }
+      setError(errorMsg);
     } finally {
       setIsLoading(false);
     }

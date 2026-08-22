@@ -48,14 +48,9 @@ export function AppLayout() {
               }
             >
               <div className="flex items-center gap-3">
-                <item.icon className="h-5 w-5" />
+                <item.icon className={cn("h-5 w-5", location.pathname === item.to ? 'text-blue-600' : 'text-gray-400')} />
                 {item.label}
               </div>
-              {item.label === 'My Trips' && (
-                <span className="bg-blue-100 text-blue-700 py-0.5 px-2 rounded-full text-xs font-bold">
-                  2
-                </span>
-              )}
             </NavLink>
           ))}
         </nav>

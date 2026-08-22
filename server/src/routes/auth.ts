@@ -23,25 +23,31 @@ const loginSchema = z.object({
 router.post("/signup", async (req, res) => {
   const parsed = signupSchema.safeParse(req.body);
   if (!parsed.success) {
-    return res.status(400).json({ error: parsed.error.flatten() });
+    console.error("Zod Validation Error:", parsed.error.flatten());
+    return res.status(400).json({ error: "Invalid form data: " + JSON.stringify(parsed.error.flatten().fieldErrors) });
   }
   const { name, email, password, photoUrl } = parsed.data;
 
-  const existing = await prisma.user.findUnique({ where: { email } });
-  if (existing) {
-    return res.status(409).json({ error: "Email already registered" });
+  try {
+    const existing = await prisma.user.findUnique({ where: { email } });
+    if (existing) {
+      return res.status(409).json({ error: "Email already registered" });
+    }
+
+    const passwordHash = await bcrypt.hash(password, 10);
+    const user = await prisma.user.create({
+      data: { name, email, passwordHash, photoUrl: photoUrl || null },
+    });
+
+    const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: "7d" });
+    res.status(201).json({
+      token,
+      user: { id: user.id, name: user.name, email: user.email, photoUrl: user.photoUrl },
+    });
+  } catch (err: any) {
+    console.error("Signup internal error:", err);
+    res.status(500).json({ error: "Internal server error" });
   }
-
-  const passwordHash = await bcrypt.hash(password, 10);
-  const user = await prisma.user.create({
-    data: { name, email, passwordHash, photoUrl: photoUrl || null },
-  });
-
-  const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: "7d" });
-  res.status(201).json({
-    token,
-    user: { id: user.id, name: user.name, email: user.email, photoUrl: user.photoUrl },
-  });
 });
 
 router.post("/login", async (req, res) => {
