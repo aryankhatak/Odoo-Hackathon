@@ -1,13 +1,98 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client"
   output   = "../generated/prisma"
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mysql"
 }
+
+model User {
+  id           Int      @id @default(autoincrement())
+  name         String
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  photoUrl     String?  @map("photo_url")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  trips Trip[]
+
+  @@map("users")
+}
+
+model Trip {
+  id             Int       @id @default(autoincrement())
+  userId         Int       @map("user_id")
+  name           String
+  startDate      DateTime  @map("start_date")
+  endDate        DateTime  @map("end_date")
+  description    String?   @db.Text
+  coverPhotoUrl  String?   @map("cover_photo_url")
+  isPublic       Boolean   @default(false) @map("is_public")
+  shareSlug      String?   @unique @map("share_slug")
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  stops Stop[]
+
+  @@map("trips")
+}
+
+model City {
+  id         Int    @id @default(autoincrement())
+  name       String
+  country    String
+  costIndex  Int    @map("cost_index")
+  popularity Int    @default(0)
+  imageUrl   String? @map("image_url")
+
+  stops      Stop[]
+  activities Activity[]
+
+  @@map("cities")
+}
+
+model Stop {
+  id        Int      @id @default(autoincrement())
+  tripId    Int      @map("trip_id")
+  cityId    Int      @map("city_id")
+  startDate DateTime @map("start_date")
+  endDate   DateTime @map("end_date")
+  orderIndex Int     @map("order_index")
+
+  trip           Trip           @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  city           City           @relation(fields: [cityId], references: [id])
+  stopActivities StopActivity[]
+
+  @@map("stops")
+}
+
+model Activity {
+  id              Int      @id @default(autoincrement())
+  cityId          Int      @map("city_id")
+  name            String
+  category        String
+  cost            Decimal  @db.Decimal(10, 2)
+  durationMinutes Int      @map("duration_minutes")
+  description     String?  @db.Text
+  imageUrl        String?  @map("image_url")
+
+  city           City           @relation(fields: [cityId], references: [id])
+  stopActivities StopActivity[]
+
+  @@map("activities")
+}
+
+model StopActivity {
+  id             Int      @id @default(autoincrement())
+  stopId         Int      @map("stop_id")
+  activityId     Int      @map("activity_id")
+  scheduledDate  DateTime @map("scheduled_date")
+  scheduledTime  String?  @map("scheduled_time")
+  costOverride   Decimal? @db.Decimal(10, 2) @map("cost_override")
+
+  stop     Stop     @relation(fields: [stopId], references: [id], onDelete: Cascade)
+  activity Activity @relation(fields: [activityId], references: [id])
+
+  @@map("stop_activities")
+} 

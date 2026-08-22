@@ -17,7 +17,12 @@
     }
   },
   "type": "module",
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
   "dependencies": {
+    "@prisma/adapter-mariadb": "^7.9.1",
+    "@prisma/client": "^7.9.1",
     "bcrypt": "^6.0.0",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
@@ -33,6 +38,7 @@
     "@types/node": "^26.2.0",
     "prisma": "^7.9.1",
     "ts-node-dev": "^2.0.0",
+    "tsx": "^4.23.12",
     "typescript": "^7.0.2"
   }
 }
