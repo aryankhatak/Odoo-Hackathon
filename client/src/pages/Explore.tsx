@@ -1,8 +1,49 @@
+import { useState, useEffect } from 'react';
 import { Search, MapPin, Star, Heart, Filter, Plus, ChevronRight } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Card, CardContent } from '../components/ui/Card';
+import { api } from '../services/api';
 
 export default function Explore() {
+  const [cities, setCities] = useState<any[]>([]);
+  const [search, setSearch] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchCities = async () => {
+      try {
+        setIsLoading(true);
+        const res = await api.get(`/cities?search=${search}`);
+        setCities(res.data.cities || []);
+      } catch (error) {
+        console.error('Error fetching cities:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    // Simple debounce
+    const timeout = setTimeout(fetchCities, 300);
+    return () => clearTimeout(timeout);
+  }, [search]);
+
+  // Use the first returned city as the "Featured Destination" if available,
+  // or a fallback if the DB doesn't have many cities yet.
+  const featuredCity = cities.length > 0 ? cities[0] : {
+    name: 'Bali',
+    country: 'Indonesia',
+    imageUrl: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?q=80&w=1200&auto=format&fit=crop',
+    costIndex: 3,
+    popularity: 98
+  };
+
+  // Convert cost index (1-5) to string
+  const getCostString = (index: number) => {
+    if (index <= 2) return 'Budget';
+    if (index === 3) return 'Moderate';
+    return 'High';
+  };
+
   return (
     <div className="space-y-8 max-w-7xl mx-auto pb-12">
       
@@ -31,6 +72,8 @@ export default function Explore() {
               type="text" 
               placeholder="Search cities, countries, destinations..." 
               className="flex-1 bg-transparent border-none focus:ring-0 text-sm py-2 px-2 outline-none text-gray-700"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
             />
             <Button className="rounded-full px-6 bg-blue-600 hover:bg-blue-700 font-semibold shadow-sm">
               Search
@@ -72,8 +115,8 @@ export default function Explore() {
           {/* Main Featured Card */}
           <div className="lg:col-span-2 relative rounded-2xl overflow-hidden shadow-sm group">
             <img 
-              src="https://images.unsplash.com/photo-1537996194471-e657df975ab4?q=80&w=1200&auto=format&fit=crop" 
-              alt="Bali, Indonesia" 
+              src={featuredCity.imageUrl || 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?q=80&w=1200&auto=format&fit=crop'} 
+              alt={`${featuredCity.name}, ${featuredCity.country}`} 
               className="w-full h-80 object-cover transition-transform duration-700 group-hover:scale-105"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
@@ -88,16 +131,16 @@ export default function Explore() {
 
             <div className="absolute bottom-6 left-6 right-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
               <div>
-                <h3 className="text-3xl font-extrabold text-white mb-2">Bali, Indonesia</h3>
+                <h3 className="text-3xl font-extrabold text-white mb-2">{featuredCity.name}, {featuredCity.country}</h3>
                 <p className="text-gray-200 font-medium text-sm max-w-md mb-4 leading-relaxed">
-                  Tropical paradise with stunning beaches, rich culture and unforgettable sunsets.
+                  Discover amazing places, plan unforgettable itineraries and create lifetime memories in {featuredCity.name}.
                 </p>
                 <div className="flex items-center gap-4 text-xs font-semibold text-white">
                   <span className="flex items-center gap-1 bg-black/40 backdrop-blur px-2.5 py-1.5 rounded-md">
-                    💰 Cost: Moderate
+                    💰 Cost: {getCostString(featuredCity.costIndex)}
                   </span>
                   <span className="flex items-center gap-1 bg-black/40 backdrop-blur px-2.5 py-1.5 rounded-md">
-                    <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" /> 4.8 (2.3k reviews)
+                    <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" /> 4.8 ({featuredCity.popularity * 23} reviews)
                   </span>
                 </div>
               </div>
@@ -115,13 +158,13 @@ export default function Explore() {
           {/* Why Travelers Love list */}
           <Card className="border-gray-100 shadow-sm">
             <CardContent className="p-6">
-              <h3 className="font-bold text-gray-900 mb-6 tracking-tight">Why travelers love Bali</h3>
+              <h3 className="font-bold text-gray-900 mb-6 tracking-tight">Why travelers love {featuredCity.name}</h3>
               <div className="space-y-5">
                 {[
-                  { icon: '🏖️', title: 'Beautiful Beaches', desc: 'Crystal clear waters and white sands' },
-                  { icon: '🏛️', title: 'Rich Culture', desc: 'Temples, traditions and local heritage' },
-                  { icon: '🥥', title: 'Amazing Food', desc: 'Delicious local and international cuisine' },
-                  { icon: '🤿', title: 'Exciting Activities', desc: 'Surfing, diving, hiking and more' },
+                  { icon: '🏖️', title: 'Top Attractions', desc: 'Must-visit spots' },
+                  { icon: '🏛️', title: 'Rich Culture', desc: 'Temples, traditions and history' },
+                  { icon: '🥥', title: 'Amazing Food', desc: 'Delicious local cuisine' },
+                  { icon: '🤿', title: 'Exciting Activities', desc: 'Unforgettable experiences' },
                 ].map((item, idx) => (
                   <div key={idx} className="flex items-center justify-between group cursor-pointer">
                     <div className="flex items-center gap-4">
@@ -142,68 +185,60 @@ export default function Explore() {
         </div>
       </div>
 
-      {/* Popular Destinations */}
+      {/* Popular Destinations / Search Results */}
       <div>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold text-gray-900 tracking-tight">Popular Destinations</h2>
+          <h2 className="text-xl font-bold text-gray-900 tracking-tight">
+            {search ? 'Search Results' : 'Popular Destinations'}
+          </h2>
           <a href="#" className="text-sm font-semibold text-blue-600 hover:text-blue-800">
             View all
           </a>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          {[
-            { 
-              name: 'Paris', country: 'France', flag: '🇫🇷', img: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?q=80&w=600&auto=format&fit=crop',
-              desc: 'The city of light and love', cost: 'High', rating: '4.7 (1.8k)'
-            },
-            { 
-              name: 'Tokyo', country: 'Japan', flag: '🇯🇵', img: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?q=80&w=600&auto=format&fit=crop',
-              desc: 'Where tradition meets futuristic life', cost: 'High', rating: '4.8 (2.1k)'
-            },
-            { 
-              name: 'Rome', country: 'Italy', flag: '🇮🇹', img: 'https://images.unsplash.com/photo-1552832230-c0197dd311b5?q=80&w=600&auto=format&fit=crop',
-              desc: 'Explore ancient history and timeless beauty', cost: 'Moderate', rating: '4.6 (1.5k)'
-            },
-            { 
-              name: 'Dubai', country: 'UAE', flag: '🇦🇪', img: 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?q=80&w=600&auto=format&fit=crop',
-              desc: 'Luxury, adventure and modern wonders', cost: 'High', rating: '4.5 (1.2k)'
-            },
-          ].map((dest) => (
-            <div key={dest.name} className="relative rounded-xl overflow-hidden shadow-sm group aspect-[4/5] bg-gray-900 flex flex-col justify-end">
-              <img 
-                src={dest.img} 
-                alt={dest.name} 
-                className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 opacity-80 group-hover:opacity-100"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
-              
-              <button className="absolute top-3 right-3 h-7 w-7 bg-white/20 backdrop-blur rounded-full flex items-center justify-center text-white hover:bg-white hover:text-red-500 transition-colors shadow-sm">
-                <Heart className="h-3.5 w-3.5" />
-              </button>
-
-              <div className="relative p-4 pb-4">
-                <h3 className="text-white font-extrabold text-lg flex items-center gap-1.5 mb-1">
-                  {dest.name}, {dest.country} <span>{dest.flag}</span>
-                </h3>
-                <p className="text-gray-300 text-xs font-medium mb-4 line-clamp-2 leading-relaxed">
-                  {dest.desc}
-                </p>
+        
+        {isLoading ? (
+          <div className="py-12 text-center text-gray-500 font-medium animate-pulse">Loading destinations...</div>
+        ) : cities.length === 0 ? (
+          <div className="py-12 text-center text-gray-500 font-medium">No destinations found for "{search}"</div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {cities.slice(1).map((dest) => (
+              <div key={dest.id} className="relative rounded-xl overflow-hidden shadow-sm group aspect-[4/5] bg-gray-900 flex flex-col justify-end">
+                <img 
+                  src={dest.imageUrl || 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?q=80&w=600&auto=format&fit=crop'} 
+                  alt={dest.name} 
+                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 opacity-80 group-hover:opacity-100"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
                 
-                <div className="flex flex-col gap-3">
-                  <div className="flex items-center justify-between text-[11px] font-bold text-gray-300">
-                    <span className="flex items-center gap-1">💰 {dest.cost}</span>
-                    <span className="flex items-center gap-0.5 text-yellow-400">
-                      <Star className="h-3 w-3 fill-yellow-400" /> {dest.rating}
-                    </span>
+                <button className="absolute top-3 right-3 h-7 w-7 bg-white/20 backdrop-blur rounded-full flex items-center justify-center text-white hover:bg-white hover:text-red-500 transition-colors shadow-sm">
+                  <Heart className="h-3.5 w-3.5" />
+                </button>
+
+                <div className="relative p-4 pb-4">
+                  <h3 className="text-white font-extrabold text-lg flex items-center gap-1.5 mb-1">
+                    {dest.name}, {dest.country}
+                  </h3>
+                  <p className="text-gray-300 text-xs font-medium mb-4 line-clamp-2 leading-relaxed">
+                    Discover amazing places, plan unforgettable itineraries and create lifetime memories.
+                  </p>
+                  
+                  <div className="flex flex-col gap-3">
+                    <div className="flex items-center justify-between text-[11px] font-bold text-gray-300">
+                      <span className="flex items-center gap-1">💰 {getCostString(dest.costIndex)}</span>
+                      <span className="flex items-center gap-0.5 text-yellow-400">
+                        <Star className="h-3 w-3 fill-yellow-400" /> {(dest.popularity / 20).toFixed(1)} ({dest.popularity * 15})
+                      </span>
+                    </div>
+                    <Button className="w-full bg-white text-gray-900 hover:bg-gray-100 font-bold text-xs h-8 gap-1 shadow-sm">
+                      <Plus className="h-3.5 w-3.5 text-blue-600" /> Add to Trip
+                    </Button>
                   </div>
-                  <Button className="w-full bg-white text-gray-900 hover:bg-gray-100 font-bold text-xs h-8 gap-1 shadow-sm">
-                    <Plus className="h-3.5 w-3.5 text-blue-600" /> Add to Trip
-                  </Button>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Explore by Region */}
