@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Plus, MapPin, Calendar as CalendarIcon, ArrowRight } from 'lucide-react';
+import { Plus, MapPin, Calendar as CalendarIcon, ArrowRight, Plane } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
 import { Button } from '../components/ui/Button';
