@@ -174,55 +174,10 @@ export default function Login() {
       {/* Right side - The Water Image Cover */}
       <div className="relative hidden w-0 flex-1 lg:block overflow-hidden bg-gray-900">
         <img
-          className="absolute inset-0 h-full w-full object-cover animate-kenburns opacity-90"
+          className="absolute inset-0 h-full w-full object-cover animate-kenburns"
           src="/water.png"
           alt="Water and mountain scenery"
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-gray-900/90 via-gray-900/50 to-transparent" />
-        
-        {/* Right side content */}
-        <div className="absolute inset-0 p-16 flex flex-col justify-center">
-          <div className="max-w-md">
-            <h2 className="text-5xl font-extrabold text-white leading-tight mb-6 tracking-tight">
-              Adventure<br />is calling.
-            </h2>
-            <p className="text-lg text-gray-200 font-medium mb-12 leading-relaxed">
-              Discover breathtaking destinations and plan trips that stay with you forever.
-            </p>
-
-            <div className="space-y-8">
-              <div className="flex items-start gap-5">
-                <div className="h-12 w-12 bg-blue-600 text-white rounded-full flex items-center justify-center shrink-0 shadow-lg shadow-blue-900/50">
-                  <Map className="h-6 w-6" />
-                </div>
-                <div>
-                  <h4 className="font-bold text-white text-lg mb-1">Plan with ease</h4>
-                  <p className="text-gray-300 font-medium">Smart itineraries in minutes</p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-5">
-                <div className="h-12 w-12 bg-green-500 text-white rounded-full flex items-center justify-center shrink-0 shadow-lg shadow-green-900/50">
-                  <MapPin className="h-6 w-6" />
-                </div>
-                <div>
-                  <h4 className="font-bold text-white text-lg mb-1">Discover more</h4>
-                  <p className="text-gray-300 font-medium">Explore top destinations</p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-5">
-                <div className="h-12 w-12 bg-purple-600 text-white rounded-full flex items-center justify-center shrink-0 shadow-lg shadow-purple-900/50">
-                  <Users className="h-6 w-6" />
-                </div>
-                <div>
-                  <h4 className="font-bold text-white text-lg mb-1">Travel together</h4>
-                  <p className="text-gray-300 font-medium">Share and collaborate trips</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );
