@@ -1,54 +1,70 @@
-# GlobeTrotter 🌍 | Odoo Hackathon
+﻿# GlobeTrotter 🌍
 
-> A full-stack travel planning platform to create, organize, and share personalized multi-city itineraries with budget tracking and timeline visualization.
-
-**Problem Statement:** GlobeTrotter - Empowering Personalized Travel Planning  
-**Repository:** `Odoo-Hackathon` | **Branch:** `setup-backend`
-
-[![React](https://img.shields.io/badge/Frontend-React%2019-61DAFB?style=flat&logo=react)](./client)
-[![Express](https://img.shields.io/badge/Backend-Express%205-000000?style=flat&logo=express)](./server)
-[![Prisma](https://img.shields.io/badge/ORM-Prisma%207-2D3748?style=flat&logo=prisma)](./server/prisma)
-[![TypeScript](https://img.shields.io/badge/TypeScript-100%25-3178C6?style=flat&logo=typescript)](.)
-
----
-
-## 📌 Overview
-
-GlobeTrotter simplifies multi-city travel planning. Users can create trips, add stops and cities, schedule activities with custom costs and timings, visualize their journey on a timeline, track budgets with charts, and share itineraries via a public link.
-
-The platform is built with a relational database design to handle complex travel data — trips, stops, cities, activities, and shared links.
+GlobeTrotter is a full-stack travel planning application built for the Odoo Hackathon. It empowers users to explore new destinations, save their favorite spots, build detailed itineraries, and track their travel budgets seamlessly.
 
 ## ✨ Features
 
-### Core Modules
-
-- **Authentication:** Secure signup/login with JWT and bcrypt, protected routes
-- **Dashboard:** Overview of trips, total budget, destinations count, and recommended cities
-- **My Trips:** List all trips with search, edit, delete, and share actions
-- **Create / Edit Trip:** Create trip with name, dates, description, and cover photo. Edit support via query params
-- **Itinerary Builder:** Add and manage stops, select cities, reorder stops
-- **Activity Planner:** Search activities by city, category, cost, and duration. Schedule with date validation (must be within stop dates), time, and cost override
-- **Timeline View:** Chronological day-wise view of the complete itinerary
-- **Budget & Analytics:** Cost breakdown by category, average cost per day, daily budget limit with over-budget alerts. Charts powered by Recharts (PieChart, BarChart)
-- **Public Sharing:** Generate shareable slug-based links, public read-only view, and copy-trip functionality for logged-in users
-- **Profile Settings:** Update name, photo, email, and manage account
-- **Admin Dashboard:** System analytics — total seeded cities, average cost index, average popularity, Top 10 popular cities and cost index charts
+- **User Authentication**: Secure Sign-Up and Login with profile photo uploads.
+- **Interactive Dashboard**: Get a birds-eye view of your upcoming trips, total travel budget, and category-based cost breakdowns.
+- **Explore Destinations**: Browse popular cities and discover exciting activities. 
+- **Saved Places**: Save your favorite destinations (with heart icons) to revisit them later.
+- **Trip Management**: Create and manage trips, set budgets, and track your expenses dynamically.
+- **Smart Itinerary Builder**: Plan your days with specific activities, track costs, and organize your schedule.
+- **Travel Timeline (Calendar)**: A chronological view of your upcoming flights, transport, and planned activities.
 
 ## 🛠️ Tech Stack
 
-**Frontend - `/client`**
-- React 19, TypeScript, Vite
-- React Router DOM 7, Tailwind CSS 4
-- Recharts, Lucide React
-- pnpm as package manager
+### Frontend
+- **React 18** (Vite)
+- **Tailwind CSS** (for responsive and modern UI)
+- **Lucide React** (for beautiful iconography)
+- **Recharts** (for budget data visualization)
 
-**Backend - `/server`**
-- Node.js, Express 5, TypeScript
-- Prisma ORM 7 with MariaDB/MySQL adapter
-- JWT, bcrypt, Zod validation, CORS, dotenv
-- tsx for development
+### Backend
+- **Node.js & Express.js**
+- **Prisma ORM** 
+- **SQLite** (Database)
+- **Zod** (Data validation)
+- **JWT** (Authentication)
 
-**Database**
-- MariaDB / MySQL / PostgreSQL (configurable via Prisma `DATABASE_URL`)
+## 🚀 Getting Started
 
-## 📁 Project Structure
+### Prerequisites
+- Node.js (v18 or higher)
+- npm or yarn
+
+### Installation
+
+1. **Clone the repository**
+   \\\ash
+   git clone https://github.com/aryankhatak/Odoo-Hackathon.git
+   cd Odoo-Hackathon
+   \\\
+
+2. **Setup Backend**
+   \\\ash
+   cd server
+   npm install
+   # Initialize the SQLite database and run migrations
+   npx prisma generate
+   npx prisma db push
+   # Seed the database with popular cities
+   npx tsx prisma/seed.ts
+   # Start the backend server (runs on http://localhost:5000)
+   npm run dev
+   \\\
+
+3. **Setup Frontend**
+   Open a new terminal window:
+   \\\ash
+   cd client
+   npm install
+   # Start the Vite development server (runs on http://localhost:5173)
+   npm run dev
+   \\\
+
+## 📸 Screenshots
+*(Add screenshots of your Dashboard, Explore page, and Itinerary Builder here before the demo!)*
+
+## 🏆 Hackathon Details
+Created with ❤️ for the Odoo Hackathon. 
