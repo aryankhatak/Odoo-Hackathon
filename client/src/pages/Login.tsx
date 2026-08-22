@@ -1,15 +1,15 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Plane } from 'lucide-react';
+import { Plane, Mail, Lock, Eye, EyeOff, ArrowRight, Map, MapPin, Users, Shield, Globe, Heart } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
 import { Button } from '../components/ui/Button';
-import { Input } from '../components/ui/Input';
-import { Card, CardContent, CardHeader } from '../components/ui/Card';
+import { Card, CardContent } from '../components/ui/Card';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
@@ -32,91 +32,197 @@ export default function Login() {
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex min-h-screen bg-white">
       {/* Left side - Login Form */}
-      <div className="flex flex-1 flex-col justify-center px-4 py-12 sm:px-6 lg:flex-none lg:px-20 xl:px-24 w-full lg:w-1/2">
-        <div className="mx-auto w-full max-w-sm lg:w-96">
-          <div className="flex flex-col items-center mb-8">
-            <span className="flex items-center gap-2 text-3xl font-bold text-blue-600">
-              <Plane className="h-8 w-8" /> GlobeTrotter
-            </span>
-            <p className="mt-2 text-sm text-gray-600">Plan, Explore, Experience.</p>
-          </div>
+      <div className="flex flex-col flex-1 relative bg-white">
+        {/* Dotted path background decoration */}
+        <div className="absolute top-10 left-10 right-10 flex justify-between items-start pointer-events-none opacity-20">
+          <svg width="100%" height="150" viewBox="0 0 1000 150" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M0 100 Q 250 50, 500 100 T 1000 50" stroke="#2563eb" strokeWidth="2" strokeDasharray="8 8" fill="none" />
+          </svg>
+          <Plane className="absolute top-[40px] right-[10%] text-blue-600 h-8 w-8 rotate-12" />
+        </div>
 
-          <Card className="shadow-lg border-0">
-            <CardHeader>
-              <div className="flex gap-4 border-b border-gray-100 pb-4 mb-2">
-                <div className="w-1/2 text-center pb-2 border-b-2 border-blue-600 font-semibold text-blue-600">
+        <div className="flex-1 flex flex-col justify-center px-4 py-8 sm:px-6 lg:px-20 xl:px-24">
+          <div className="mx-auto w-full max-w-[420px] relative z-10">
+            
+            {/* Header */}
+            <div className="flex flex-col items-center mb-6">
+              <span className="flex items-center gap-2 text-3xl font-extrabold text-blue-700">
+                <Plane className="h-8 w-8" /> GlobeTrotter
+              </span>
+              <p className="mt-1 text-xs font-semibold text-gray-500 uppercase tracking-widest">Plan. Explore. Experience.</p>
+            </div>
+
+            <div className="mb-8">
+              <h1 className="text-3xl font-bold text-gray-900 mb-2 flex items-center gap-2">
+                Welcome back <span className="text-yellow-400">👋</span>
+              </h1>
+              <p className="text-gray-500 font-medium">Log in to continue your adventure.</p>
+            </div>
+
+            <Card className="shadow-[0_8px_30px_rgb(0,0,0,0.08)] border-gray-100 rounded-2xl">
+              <div className="flex border-b border-gray-100">
+                <div className="flex-1 text-center py-4 border-b-2 border-blue-600 font-bold text-blue-700">
                   Login
                 </div>
-                <Link to="/signup" className="w-1/2 text-center pb-2 text-gray-500 hover:text-gray-700 font-medium cursor-pointer">
+                <Link to="/signup" className="flex-1 text-center py-4 text-gray-400 hover:text-gray-700 font-bold transition-colors">
                   Sign Up
                 </Link>
               </div>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleLogin} className="space-y-6">
-                {error && (
-                  <div className="bg-red-50 text-red-600 p-3 rounded-md text-sm border border-red-100">
-                    {error}
-                  </div>
-                )}
-                
-                <div>
-                  <label className="block text-sm font-medium leading-6 text-gray-900 mb-2">
-                    Email address
-                  </label>
-                  <Input
-                    type="email"
-                    required
-                    placeholder="Enter your email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                  />
-                </div>
-
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <label className="block text-sm font-medium leading-6 text-gray-900">
-                      Password
+              <CardContent className="p-8">
+                <form onSubmit={handleLogin} className="space-y-5">
+                  {error && (
+                    <div className="bg-red-50 text-red-600 p-3 rounded-xl text-sm border border-red-100 font-medium">
+                      {error}
+                    </div>
+                  )}
+                  
+                  <div className="space-y-1.5">
+                    <label className="block text-sm font-bold text-gray-900">
+                      Email address
                     </label>
-                    <a href="#" className="text-sm font-semibold text-blue-600 hover:text-blue-500">
-                      Forgot Password?
-                    </a>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                        <Mail className="h-4 w-4 text-gray-400" />
+                      </div>
+                      <input
+                        type="email"
+                        required
+                        placeholder="Enter your email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="block w-full rounded-xl border-0 py-2.5 pl-10 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-200 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6 bg-gray-50/50"
+                      />
+                    </div>
                   </div>
-                  <Input
-                    type="password"
-                    required
-                    placeholder="Enter your password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                  />
-                </div>
 
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? 'Logging in...' : 'Login'}
-                </Button>
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <label className="block text-sm font-bold text-gray-900">
+                        Password
+                      </label>
+                      <a href="#" className="text-xs font-semibold text-blue-600 hover:text-blue-500">
+                        Forgot Password?
+                      </a>
+                    </div>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                        <Lock className="h-4 w-4 text-gray-400" />
+                      </div>
+                      <input
+                        type={showPassword ? 'text' : 'password'}
+                        required
+                        placeholder="Enter your password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="block w-full rounded-xl border-0 py-2.5 pl-10 pr-10 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-200 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6 bg-gray-50/50"
+                      />
+                      <button 
+                        type="button" 
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-gray-400 hover:text-gray-600"
+                      >
+                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    </div>
+                  </div>
 
-                <div className="mt-6 text-center text-sm text-gray-500">
-                  Don't have an account?{' '}
-                  <Link to="/signup" className="font-semibold text-blue-600 hover:text-blue-500">
-                    Sign up
-                  </Link>
-                </div>
-              </form>
-            </CardContent>
-          </Card>
+                  <Button type="submit" className="w-full mt-4 bg-blue-600 hover:bg-blue-700 py-6 rounded-xl font-bold text-base shadow-md shadow-blue-200 gap-2 transition-transform active:scale-[0.98]" disabled={isLoading}>
+                    {isLoading ? 'Logging in...' : 'Login'} <ArrowRight className="h-5 w-5" />
+                  </Button>
+
+                  <div className="mt-6 text-center text-sm font-semibold text-gray-500">
+                    Don't have an account?{' '}
+                    <Link to="/signup" className="text-blue-600 hover:text-blue-700">
+                      Sign Up
+                    </Link>
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
+          </div>
         </div>
+
+        {/* Footer features */}
+        <div className="pb-8 px-8 hidden sm:flex justify-center gap-12 mt-auto text-center border-t border-gray-100 pt-8">
+          <div className="flex flex-col items-center">
+            <div className="h-10 w-10 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mb-3">
+              <Shield className="h-5 w-5" />
+            </div>
+            <h4 className="font-bold text-gray-900 text-sm mb-1">Secure & Private</h4>
+            <p className="text-xs font-medium text-gray-500">Your data is safe with us</p>
+          </div>
+          <div className="flex flex-col items-center">
+            <div className="h-10 w-10 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mb-3">
+              <Globe className="h-5 w-5" />
+            </div>
+            <h4 className="font-bold text-gray-900 text-sm mb-1">Explore the World</h4>
+            <p className="text-xs font-medium text-gray-500">Discover amazing places</p>
+          </div>
+          <div className="flex flex-col items-center">
+            <div className="h-10 w-10 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mb-3">
+              <Heart className="h-5 w-5" />
+            </div>
+            <h4 className="font-bold text-gray-900 text-sm mb-1">Build Memories</h4>
+            <p className="text-xs font-medium text-gray-500">Plan trips you'll love</p>
+          </div>
+        </div>
+
       </div>
       
-      {/* Right side - Animated Image Cover */}
-      <div className="relative hidden w-0 flex-1 lg:block overflow-hidden">
+      {/* Right side - The Water Image Cover */}
+      <div className="relative hidden w-0 flex-1 lg:block overflow-hidden bg-gray-900">
         <img
-          className="absolute inset-0 h-full w-full object-cover animate-kenburns"
-          src="https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?q=80&w=2070&auto=format&fit=crop"
-          alt="Scenic travel background"
+          className="absolute inset-0 h-full w-full object-cover animate-kenburns opacity-90"
+          src="/water.png"
+          alt="Water and mountain scenery"
         />
-        <div className="absolute inset-0 bg-blue-900/20 mix-blend-multiply" />
+        <div className="absolute inset-0 bg-gradient-to-r from-gray-900/90 via-gray-900/50 to-transparent" />
+        
+        {/* Right side content */}
+        <div className="absolute inset-0 p-16 flex flex-col justify-center">
+          <div className="max-w-md">
+            <h2 className="text-5xl font-extrabold text-white leading-tight mb-6 tracking-tight">
+              Adventure<br />is calling.
+            </h2>
+            <p className="text-lg text-gray-200 font-medium mb-12 leading-relaxed">
+              Discover breathtaking destinations and plan trips that stay with you forever.
+            </p>
+
+            <div className="space-y-8">
+              <div className="flex items-start gap-5">
+                <div className="h-12 w-12 bg-blue-600 text-white rounded-full flex items-center justify-center shrink-0 shadow-lg shadow-blue-900/50">
+                  <Map className="h-6 w-6" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-white text-lg mb-1">Plan with ease</h4>
+                  <p className="text-gray-300 font-medium">Smart itineraries in minutes</p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-5">
+                <div className="h-12 w-12 bg-green-500 text-white rounded-full flex items-center justify-center shrink-0 shadow-lg shadow-green-900/50">
+                  <MapPin className="h-6 w-6" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-white text-lg mb-1">Discover more</h4>
+                  <p className="text-gray-300 font-medium">Explore top destinations</p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-5">
+                <div className="h-12 w-12 bg-purple-600 text-white rounded-full flex items-center justify-center shrink-0 shadow-lg shadow-purple-900/50">
+                  <Users className="h-6 w-6" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-white text-lg mb-1">Travel together</h4>
+                  <p className="text-gray-300 font-medium">Share and collaborate trips</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
