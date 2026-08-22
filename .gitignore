@@ -1,0 +1,12 @@
+node_modules/
+.env
+dist/
+build/
+*.log
+.DS_Store 
+.agents/
+.claude/
+.windsurf/
+skills-lock.json 
+server/generated/
+client/dist/

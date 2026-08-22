@@ -1,0 +1,291 @@
+import { useState, useRef } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Plane, User, Mail, Lock, Eye, EyeOff, ArrowRight, Shield, Globe, Heart, Camera } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { api } from '../services/api';
+import { Button } from '../components/ui/Button';
+import { Card, CardContent } from '../components/ui/Card';
+
+export default function Signup() {
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [photoUrl, setPhotoUrl] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const { login } = useAuth();
+  const navigate = useNavigate();
+
+  // Basic password strength calculation
+  const getStrength = (pass: string) => {
+    let score = 0;
+    if (pass.length > 5) score += 1;
+    if (pass.length > 8) score += 1;
+    if (/[A-Z]/.test(pass) && /[0-9]/.test(pass)) score += 1;
+    return score;
+  };
+  const strength = getStrength(password);
+  const strengthLabels = ['Weak', 'Fair', 'Good', 'Strong'];
+  const strengthColors = ['bg-red-500', 'bg-orange-500', 'bg-green-500', 'bg-green-600'];
+  const textColor = ['text-red-500', 'text-orange-500', 'text-green-500', 'text-green-600'];
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const processFile = (file: File) => {
+    if (file.size > 2 * 1024 * 1024) {
+      setError('Please choose an image under 2MB');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setPhotoUrl(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files?.[0]) processFile(e.target.files[0]);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    const file = e.dataTransfer.files?.[0];
+    if (file && file.type.startsWith('image/')) {
+      processFile(file);
+    }
+  };
+
+  const handleSignup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setIsLoading(true);
+
+    try {
+      const response = await api.post('/auth/signup', { name, email, password, photoUrl });
+      login(response.data.token, response.data.user);
+      navigate('/dashboard');
+    } catch (err: any) {
+      console.error("Signup error:", err);
+      let errorMsg = 'Failed to sign up. Please try again.';
+      if (err.response?.data?.error) {
+         errorMsg = typeof err.response.data.error === 'string' ? err.response.data.error : JSON.stringify(err.response.data.error);
+      } else if (err.message) {
+         errorMsg = err.message;
+      }
+      setError(errorMsg);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="flex min-h-screen bg-white">
+      {/* Left side - Signup Form */}
+      <div className="flex flex-col flex-1 relative bg-white">
+        {/* Dotted path background decoration */}
+        <div className="absolute top-10 left-10 right-10 flex justify-between items-start pointer-events-none opacity-20">
+          <svg width="100%" height="150" viewBox="0 0 1000 150" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M0 100 Q 250 50, 500 100 T 1000 50" stroke="#2563eb" strokeWidth="2" strokeDasharray="8 8" fill="none" />
+          </svg>
+          <Plane className="absolute top-[40px] right-[10%] text-blue-600 h-8 w-8 rotate-12" />
+        </div>
+
+        <div className="flex-1 flex flex-col justify-center px-4 py-8 sm:px-6 lg:px-20 xl:px-24">
+          <div className="mx-auto w-full max-w-[420px] relative z-10">
+            
+            {/* Header */}
+            <div className="flex flex-col items-center mb-6">
+              <span className="flex items-center gap-2 text-3xl font-extrabold text-blue-700">
+                <Plane className="h-8 w-8" /> GlobeTrotter
+              </span>
+              <p className="mt-1 text-xs font-semibold text-gray-500 uppercase tracking-widest">Plan. Explore. Experience.</p>
+            </div>
+
+            <div className="mb-8">
+              <h1 className="text-3xl font-bold text-gray-900 mb-2 flex items-center gap-2">
+                Create your account
+              </h1>
+              <p className="text-gray-500 font-medium">Start your journey to unforgettable adventures.</p>
+            </div>
+
+            <Card className="shadow-[0_8px_30px_rgb(0,0,0,0.08)] border-gray-100 rounded-2xl">
+              <div className="flex border-b border-gray-100">
+                <Link to="/login" className="flex-1 text-center py-4 text-gray-400 hover:text-gray-700 font-bold transition-colors">
+                  Login
+                </Link>
+                <div className="flex-1 text-center py-4 border-b-2 border-blue-600 font-bold text-blue-700">
+                  Sign Up
+                </div>
+              </div>
+              <CardContent className="p-8">
+                <form onSubmit={handleSignup} className="space-y-5">
+                  {error && (
+                    <div className="bg-red-50 text-red-600 p-3 rounded-xl text-sm border border-red-100 font-medium">
+                      {error}
+                    </div>
+                  )}
+
+                  {/* Photo Profile Picture Avatar Placeholder matching wireframe */}
+                  <div className="flex flex-col items-center justify-center mb-6">
+                    <div 
+                      className="relative h-24 w-24 rounded-full border-2 border-dashed border-gray-300 bg-gray-50 flex flex-col items-center justify-center overflow-hidden mb-2 cursor-pointer hover:bg-gray-100 transition-colors"
+                      onClick={() => fileInputRef.current?.click()}
+                      onDragOver={handleDragOver}
+                      onDrop={handleDrop}
+                    >
+                      {photoUrl ? (
+                        <img src={photoUrl} alt="Profile" className="h-full w-full object-cover" />
+                      ) : (
+                        <>
+                          <Camera className="h-6 w-6 text-gray-400 mb-1 pointer-events-none" />
+                          <span className="text-[10px] font-bold text-gray-400 pointer-events-none">Drop Photo</span>
+                        </>
+                      )}
+                    </div>
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      onChange={handlePhotoUpload}
+                      accept="image/*"
+                      className="hidden"
+                    />
+                    <div className="text-xs text-gray-400 font-medium">
+                      Drag & Drop or Click to upload
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-1.5">
+                    <label className="block text-sm font-bold text-gray-900">
+                      Full Name
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                        <User className="h-4 w-4 text-gray-400" />
+                      </div>
+                      <input
+                        type="text"
+                        required
+                        placeholder="Enter your full name"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        className="block w-full rounded-xl border-0 py-2.5 pl-10 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-200 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6 bg-gray-50/50"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="block text-sm font-bold text-gray-900">
+                      Email address
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                        <Mail className="h-4 w-4 text-gray-400" />
+                      </div>
+                      <input
+                        type="email"
+                        required
+                        placeholder="Enter your email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="block w-full rounded-xl border-0 py-2.5 pl-10 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-200 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6 bg-gray-50/50"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="block text-sm font-bold text-gray-900">
+                      Password
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                        <Lock className="h-4 w-4 text-gray-400" />
+                      </div>
+                      <input
+                        type={showPassword ? 'text' : 'password'}
+                        required
+                        placeholder="Create a password (min 6 characters)"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="block w-full rounded-xl border-0 py-2.5 pl-10 pr-10 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-200 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6 bg-gray-50/50"
+                      />
+                      <button 
+                        type="button" 
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-gray-400 hover:text-gray-600"
+                      >
+                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    </div>
+                    {/* Password Strength Indicator */}
+                    {password.length > 0 && (
+                      <div className="flex items-center gap-3 pt-2">
+                        <span className="text-xs font-semibold text-gray-500">Password strength:</span>
+                        <span className={`text-xs font-bold ${textColor[strength]}`}>{strengthLabels[strength]}</span>
+                        <div className="flex-1 flex gap-1 h-1">
+                          <div className={`flex-1 rounded-full ${strength >= 1 ? strengthColors[strength] : 'bg-gray-200'}`} />
+                          <div className={`flex-1 rounded-full ${strength >= 2 ? strengthColors[strength] : 'bg-gray-200'}`} />
+                          <div className={`flex-1 rounded-full ${strength >= 3 ? strengthColors[strength] : 'bg-gray-200'}`} />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <Button type="submit" className="w-full mt-4 bg-blue-600 hover:bg-blue-700 py-6 rounded-xl font-bold text-base shadow-md shadow-blue-200 gap-2 transition-transform active:scale-[0.98]" disabled={isLoading}>
+                    {isLoading ? 'Creating account...' : 'Create Account'} <ArrowRight className="h-5 w-5" />
+                  </Button>
+
+                  <div className="mt-6 text-center text-sm font-semibold text-gray-500">
+                    Already have an account?{' '}
+                    <Link to="/login" className="text-blue-600 hover:text-blue-700">
+                      Login
+                    </Link>
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+
+        {/* Footer features */}
+        <div className="pb-8 px-8 hidden sm:flex justify-center gap-12 mt-auto text-center border-t border-gray-100 pt-8">
+          <div className="flex flex-col items-center">
+            <div className="h-10 w-10 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mb-3">
+              <Shield className="h-5 w-5" />
+            </div>
+            <h4 className="font-bold text-gray-900 text-sm mb-1">Secure & Private</h4>
+            <p className="text-xs font-medium text-gray-500">Your data is safe with us</p>
+          </div>
+          <div className="flex flex-col items-center">
+            <div className="h-10 w-10 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mb-3">
+              <Globe className="h-5 w-5" />
+            </div>
+            <h4 className="font-bold text-gray-900 text-sm mb-1">Explore the World</h4>
+            <p className="text-xs font-medium text-gray-500">Discover amazing places</p>
+          </div>
+          <div className="flex flex-col items-center">
+            <div className="h-10 w-10 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mb-3">
+              <Heart className="h-5 w-5" />
+            </div>
+            <h4 className="font-bold text-gray-900 text-sm mb-1">Build Memories</h4>
+            <p className="text-xs font-medium text-gray-500">Plan trips you'll love</p>
+          </div>
+        </div>
+
+      </div>
+      
+      {/* Right side - The Water Image Cover */}
+      <div className="relative hidden w-0 flex-1 lg:block overflow-hidden bg-gray-900">
+        <img
+          className="absolute inset-0 h-full w-full object-cover animate-kenburns"
+          src="/water.png"
+          alt="Water and mountain scenery"
+        />
+      </div>
+    </div>
+  );
+}
