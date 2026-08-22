@@ -1,6 +1,6 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Home, Plane, Map, Heart, Calendar, User, Settings, LogOut } from 'lucide-react';
+import { Home, Plane, Map, Heart, Calendar, Settings, LogOut } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 export function AppLayout() {
@@ -20,64 +20,81 @@ export function AppLayout() {
     { to: '/calendar', icon: Calendar, label: 'Calendar' },
   ];
 
-  const bottomNavItems = [
-    { to: '/profile', icon: User, label: 'Profile' },
-    { to: '/settings', icon: Settings, label: 'Settings' },
-  ];
+
 
   return (
     <div className="flex h-screen w-full bg-gray-50 font-sans text-gray-900">
       {/* Sidebar */}
       <aside className="flex w-64 flex-col border-r border-gray-200 bg-white">
-        <div className="flex h-16 items-center px-6">
-          <span className="text-xl font-bold text-blue-600 flex items-center gap-2">
+        <div className="flex h-20 flex-col justify-center px-6 border-b border-gray-100">
+          <span className="text-xl font-extrabold text-blue-600 flex items-center gap-2">
             <Plane className="h-6 w-6" /> GlobeTrotter
           </span>
+          <p className="text-xs font-medium text-gray-400 mt-0.5 ml-8">Plan. Explore. Repeat.</p>
         </div>
         
-        <nav className="flex-1 space-y-1 px-3 py-4">
+        <nav className="flex-1 space-y-1.5 px-4 py-6">
           {navItems.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
               className={({ isActive }) =>
                 cn(
-                  'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
+                  'flex items-center justify-between rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-200',
                   isActive
-                    ? 'bg-blue-50 text-blue-700'
-                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                    ? 'bg-blue-50 text-blue-700 shadow-sm'
+                    : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
                 )
               }
             >
-              <item.icon className="h-5 w-5" />
-              {item.label}
+              <div className="flex items-center gap-3">
+                <item.icon className="h-5 w-5" />
+                {item.label}
+              </div>
+              {item.label === 'My Trips' && (
+                <span className="bg-blue-100 text-blue-700 py-0.5 px-2 rounded-full text-xs font-bold">
+                  2
+                </span>
+              )}
             </NavLink>
           ))}
         </nav>
 
-        <div className="border-t border-gray-200 px-3 py-4 space-y-1">
-          {bottomNavItems.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              className={({ isActive }) =>
-                cn(
-                  'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
-                  isActive
-                    ? 'bg-blue-50 text-blue-700'
-                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                )
-              }
-            >
-              <item.icon className="h-5 w-5" />
-              {item.label}
-            </NavLink>
-          ))}
+        <div className="border-t border-gray-100 p-4 space-y-2">
+          {/* User Profile Card */}
+          <div className="flex items-center gap-3 p-2 mb-2 rounded-xl hover:bg-gray-50 transition-colors cursor-pointer" onClick={() => navigate('/profile')}>
+            {user?.photoUrl ? (
+              <img src={user.photoUrl} alt={user.name} className="h-10 w-10 rounded-full border border-gray-200 object-cover" />
+            ) : (
+              <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold">
+                {user?.name?.charAt(0).toUpperCase()}
+              </div>
+            )}
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-bold text-gray-900 truncate">{user?.name}</p>
+              <p className="text-xs text-gray-500 font-medium">Traveler</p>
+            </div>
+          </div>
+
+          <NavLink
+            to="/settings"
+            className={({ isActive }) =>
+              cn(
+                'flex items-center gap-3 rounded-lg px-4 py-2 text-sm font-medium transition-colors',
+                isActive
+                  ? 'bg-gray-100 text-gray-900'
+                  : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
+              )
+            }
+          >
+            <Settings className="h-4 w-4" />
+            Settings
+          </NavLink>
           <button
             onClick={handleLogout}
-            className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900"
+            className="flex w-full items-center gap-3 rounded-lg px-4 py-2 text-sm font-medium text-red-500 transition-colors hover:bg-red-50 hover:text-red-600"
           >
-            <LogOut className="h-5 w-5" />
+            <LogOut className="h-4 w-4" />
             Logout
           </button>
         </div>
