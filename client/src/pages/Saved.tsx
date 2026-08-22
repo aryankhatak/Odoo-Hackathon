@@ -1,4 +1,4 @@
-import { Heart, Compass, MapPin, ChevronRight, Bookmark, Camera } from 'lucide-react';
+import { Heart, Compass, MapPin, ChevronRight, Bookmark, Camera, Map, Briefcase, Plane } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 
 export default function Saved() {
@@ -19,13 +19,30 @@ export default function Saved() {
       {/* Main Empty State Card */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_2px_20px_rgb(0,0,0,0.04)] overflow-hidden flex flex-col md:flex-row items-center">
         {/* Left Illustration side */}
-        <div className="w-full md:w-1/2 bg-blue-50/50 p-12 flex justify-center items-center h-80 relative overflow-hidden">
-          {/* Using a beautifully composed Unsplash image for the flatlay/travel vibe */}
-          <img 
-            src="https://images.unsplash.com/photo-1494516192674-b82b5f1e61da?q=80&w=800&auto=format&fit=crop" 
-            alt="Travel gear"
-            className="absolute inset-0 w-full h-full object-cover opacity-90 mix-blend-multiply"
-          />
+        <div className="w-full md:w-1/2 bg-[#f8fbff] p-12 flex justify-center items-center h-80 relative overflow-hidden">
+          <div className="relative w-56 h-56 flex items-center justify-center">
+            {/* Background decorative blob */}
+            <div className="absolute inset-0 bg-blue-100/50 rounded-full blur-3xl" />
+            
+            {/* Map Element */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rotate-[10deg] bg-white p-3 rounded-2xl shadow-xl border border-gray-50 z-10">
+              <Map className="w-24 h-24 text-blue-200 stroke-1" />
+              <MapPin className="absolute top-1/2 left-1/2 text-red-500 fill-red-50 w-8 h-8 -translate-x-1/2 -translate-y-[60%]" />
+            </div>
+            
+            {/* Luggage Element */}
+            <div className="absolute bottom-2 left-0 bg-white p-3 rounded-xl shadow-lg border border-gray-50 -rotate-12 z-20">
+              <Briefcase className="w-14 h-14 text-blue-400 stroke-[1.5]" />
+            </div>
+
+            {/* Camera Element */}
+            <div className="absolute bottom-6 right-0 bg-white p-3 rounded-xl shadow-lg border border-gray-50 rotate-12 z-20">
+              <Camera className="w-10 h-10 text-gray-600 stroke-[1.5]" />
+            </div>
+
+            {/* Flying Plane */}
+            <Plane className="absolute top-4 right-8 w-8 h-8 text-blue-300 fill-blue-50 rotate-45 z-0" />
+          </div>
         </div>
         
         {/* Right Content side */}
