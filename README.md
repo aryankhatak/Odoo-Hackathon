@@ -1,81 +1,85 @@
 ﻿# GlobeTrotter 🌍
 
-GlobeTrotter is a full-stack travel planning application built for the Odoo Hackathon. It empowers users to explore new destinations, save their favorite spots, build detailed itineraries, and track their travel budgets seamlessly.
+GlobeTrotter is a travel planning web app we built for the Odoo Hackathon. Basically, instead of planning a multi-city trip on 5 different WhatsApp chats and a notes app, you can do it all in one place — pick cities, add activities, see your budget, and share the trip with friends.
 
-## 🗺️ User Flow
+## What it actually does
 
-1. **Sign Up / Login**: Create a personalized account by providing your name, email, and uploading a profile picture via drag-and-drop.
-2. **Dashboard Overview**: Land on the interactive Dashboard to get a high-level summary of your travel stats, upcoming trips, and budget utilization.
-3. **Explore Destinations**: Navigate to the Explore page to browse a curated list of popular cities, view beautiful imagery, and discover exciting local activities.
-4. **Save Favorites**: Click the heart icon on any city or activity to add them to your personalized "Saved" list for future trip planning.
-5. **Create a Trip**: Go to "My Trips" and easily create a new journey by specifying a destination name, travel dates, description, and your total allocated budget.
-6. **Plan Your Itinerary**: Dive into the Itinerary Builder to add stops (cities) to your trip and schedule specific activities day-by-day, automatically tracking the estimated costs.
-7. **Track on Calendar**: Switch to the Calendar view to see a chronological timeline of your upcoming travel plans, flights, and scheduled activities.
-8. **Monitor Your Budget**: Visit the Budget insights page to visualize your spending breakdown via interactive charts, ensuring your estimated costs stay well within your planned budget.
+- Sign up / log in
+- See a dashboard with your trips and a quick summary of what's coming up
+- Explore cities and save the ones you like
+- Create a trip and add "stops" (cities) with dates
+- Add activities to each stop and build a day-by-day itinerary
+- See a calendar view of the whole trip
+- See a budget breakdown (how much you're spending on what)
+- Share a trip publicly with a link so others can view it
 
-## ✨ Features
+## Tech we used
 
-- **User Authentication**: Secure Sign-Up and Login with profile photo uploads.
-- **Interactive Dashboard**: Get a birds-eye view of your upcoming trips, total travel budget, and category-based cost breakdowns.
-- **Explore Destinations**: Browse popular cities and discover exciting activities. 
-- **Saved Places**: Save your favorite destinations (with heart icons) to revisit them later.
-- **Trip Management**: Create and manage trips, set budgets, and track your expenses dynamically.
-- **Smart Itinerary Builder**: Plan your days with specific activities, track costs, and organize your schedule.
-- **Travel Timeline (Calendar)**: A chronological view of your upcoming flights, transport, and planned activities.
+**Frontend:** React + Vite + TypeScript, styled with Tailwind CSS, charts with Recharts, icons from Lucide.
 
-## 🛠️ Tech Stack
+**Backend:** Node.js + Express (TypeScript), Prisma as the ORM, SQLite as the database (so no need to install a separate DB server), JWT for login sessions, Zod for validating request data, bcrypt for hashing passwords.
 
-### Frontend
-- **React 18** (Vite)
-- **Tailwind CSS** (for responsive and modern UI)
-- **Lucide React** (for beautiful iconography)
-- **Recharts** (for budget data visualization)
+## How to run it on your machine
 
-### Backend
-- **Node.js & Express.js**
-- **Prisma ORM** 
-- **SQLite** (Database)
-- **Zod** (Data validation)
-- **JWT** (Authentication)
+You'll need [Node.js](https://nodejs.org/) installed (v18 or newer). Check with:
+\`\`\`bash
+node -v
+\`\`\`
 
-## 🚀 Getting Started
+We open **two terminals** — one for the backend, one for the frontend, and keep both running while you work.
 
-### Prerequisites
-- Node.js (v18 or higher)
-- npm or yarn
+### 1. Get the code
+\`\`\`bash
+git clone https://github.com/aryankhatak/Odoo-Hackathon.git
+cd Odoo-Hackathon
+\`\`\`
 
-### Installation
+### 2. Backend (server) — Terminal 1
+\`\`\`bash
+cd server
+npm install
+\`\`\`
 
-1. **Clone the repository**
-   \\\ash
-   git clone https://github.com/aryankhatak/Odoo-Hackathon.git
-   cd Odoo-Hackathon
-   \\\
+Now set up the database. This creates a `dev.db` SQLite file and fills it with sample cities and activities so the app isn't empty when you open it:
+\`\`\`bash
+npx prisma generate
+npx prisma db push
+npx tsx prisma/seed.ts
+\`\`\`
 
-2. **Setup Backend**
-   \\\ash
-   cd server
-   npm install
-   # Initialize the SQLite database and run migrations
-   npx prisma generate
-   npx prisma db push
-   # Seed the database with popular cities
-   npx tsx prisma/seed.ts
-   # Start the backend server (runs on http://localhost:5000)
-   npm run dev
-   \\\
+Start the server:
+\`\`\`bash
+npm run dev
+\`\`\`
 
-3. **Setup Frontend**
-   Open a new terminal window:
-   \\\ash
-   cd client
-   npm install
-   # Start the Vite development server (runs on http://localhost:5173)
-   npm run dev
-   \\\
+If it worked, you'll see it running on `http://localhost:5000`. You can check it's alive by opening `http://localhost:5000/api/health` in your browser — it should say `{"status":"ok"}`.
 
-## 📸 Screenshots
-*(Add screenshots of your Dashboard, Explore page, and Itinerary Builder here before the demo!)*
+### 3. Frontend (client) — Terminal 2 (new terminal, keep server running)
+\`\`\`bash
+cd client
+npm install
+npm run dev
+\`\`\`
 
-## 🏆 Hackathon Details
-Created with ❤️ for the Odoo Hackathon. 
+This starts on `http://localhost:5173` — open that in your browser and the app should load.
+
+### 4. That's it
+Sign up for a new account in the app, and start creating a trip.
+
+## A couple of things to know
+
+- The database is a single file (`server/prisma/dev.db`), not a real server — perfect for local dev/demo, not meant for production as-is.
+- If you mess up your local database and want a clean slate, just delete `server/prisma/dev.db` and re-run the `prisma db push` and `seed.ts` commands from step 2.
+- Full API endpoint list (all routes, request/response shapes) is in [`server/API.md`](./server/API.md) if you want to poke around with Postman or curl.
+
+## Project structure
+\`\`\`
+Odoo-Hackathon/
+├── client/     → React frontend
+├── server/     → Express backend + Prisma schema
+└── README.md   → you are here
+\`\`\`
+
+## Team
+
+Built by us for the Odoo Hackathon 🚀
